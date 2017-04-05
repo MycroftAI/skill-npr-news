@@ -21,7 +21,6 @@ import time
 from os.path import dirname
 import re
 
-import mycroft.skills.weather as weather
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util import play_mp3
@@ -36,16 +35,12 @@ class NPRNewsSkill(MycroftSkill):
     def __init__(self):
         super(NPRNewsSkill, self).__init__(name="NPRNewsSkill")
         self.url_rss = self.config['url_rss']
-        self.weather = weather.WeatherSkill()
         self.process = None
 
     def initialize(self):
         intent = IntentBuilder("NPRNewsIntent").require(
             "NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_intent)
-
-        self.weather.bind(self.emitter)
-        self.weather.load_data_files(dirname(weather.__file__))
 
     def handle_intent(self, message):
         try:
