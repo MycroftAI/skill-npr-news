@@ -46,7 +46,9 @@ class NPRNewsSkill(MycroftSkill):
         try:
             data = feedparser.parse(self.url_rss)
             self.speak_dialog('npr.news')
-            time.sleep(3)
+
+            # Pause for the intro, then start the new stream
+            time.sleep(4)
             self.process = play_mp3(
                 re.sub(
                     'https', 'http', data['entries'][0]['links'][0]['href']))
