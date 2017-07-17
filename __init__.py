@@ -43,7 +43,8 @@ class NPRNewsSkill(MycroftSkill):
         self.register_intent(intent, self.handle_intent)
 
         intent = IntentBuilder("NPRNewsStopIntent").require(
-                "NPRNewsStopKeyword").build()
+                "NPRNewsStopVerb") \
+                .require("NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_stop)
 
 
@@ -67,6 +68,7 @@ class NPRNewsSkill(MycroftSkill):
 
     def handle_stop(self, message):
         stop(self)
+        self.speak_dialog('npr.news.stop')
 
     def stop(self):
         if self.process and self.process.poll() is None:
