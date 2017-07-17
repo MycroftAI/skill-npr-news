@@ -42,6 +42,11 @@ class NPRNewsSkill(MycroftSkill):
             "NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_intent)
 
+        intent = IntentBuilder("NPRNewsStopIntent").require(
+                "NPRNewsStopKeyword").build()
+        self.register_intent(intent, self.handle_stop)
+
+
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
@@ -55,6 +60,9 @@ class NPRNewsSkill(MycroftSkill):
 
         except Exception as e:
             LOGGER.error("Error: {0}".format(e))
+
+    def handle_stop(self, message):
+        stop(self)
 
     def stop(self):
         if self.process and self.process.poll() is None:
