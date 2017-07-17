@@ -50,6 +50,10 @@ class NPRNewsSkill(MycroftSkill):
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
+            if self.process and self.process.poll() is None:
+                self.process.terminate()
+                self.process.wait()
+
             self.speak_dialog('npr.news')
 
             # Pause for the intro, then start the new stream
