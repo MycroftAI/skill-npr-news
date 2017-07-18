@@ -51,7 +51,7 @@ class NPRNewsSkill(MycroftSkill):
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
-            self.stop(self)
+            self.stop()
 
             self.speak_dialog('npr.news')
 
@@ -65,7 +65,7 @@ class NPRNewsSkill(MycroftSkill):
             LOGGER.error("Error: {0}".format(e))
 
     def handle_stop(self, message):
-        self.stop(self)
+        self.stop()
         self.speak_dialog('npr.news.stop')
 
     def stop(self):
