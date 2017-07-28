@@ -42,9 +42,17 @@ class NPRNewsSkill(MycroftSkill):
             "NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_intent)
 
+        intent = IntentBuilder("NPRNewsStopIntent").require(
+                "NPRNewsStopVerb") \
+                .require("NPRNewsKeyword").build()
+        self.register_intent(intent, self.handle_stop)
+
+
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
+            self.stop()
+
             self.speak_dialog('npr.news')
 
             # Pause for the intro, then start the new stream
@@ -56,11 +64,15 @@ class NPRNewsSkill(MycroftSkill):
         except Exception as e:
             LOGGER.error("Error: {0}".format(e))
 
+    def handle_stop(self, message):
+        self.stop()
+
     def stop(self):
         if self.process and self.process.poll() is None:
-            self.speak_dialog('npr.news.stop')
             self.process.terminate()
             self.process.wait()
+            self.speak_dialog('npr.news.stop')
+
 
 
 def create_skill():
