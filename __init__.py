@@ -23,8 +23,12 @@ import re
 
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
-from mycroft.util import play_mp3
 from mycroft.util.log import getLogger
+try:
+    from mycroft.skills.audioservice import AudioService
+except:
+    from mycroft.util import play_mp3
+    AudioService = None
 
 __author__ = 'jdorleans'
 
@@ -36,17 +40,20 @@ class NPRNewsSkill(MycroftSkill):
         super(NPRNewsSkill, self).__init__(name="NPRNewsSkill")
         self.url_rss = self.config['url_rss']
         self.process = None
+        self.audioservice = None
 
     def initialize(self):
         intent = IntentBuilder("NPRNewsIntent").require(
             "NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_intent)
 
-        intent = IntentBuilder("NPRNewsStopIntent").require(
-                "NPRNewsStopVerb") \
+        intent = IntentBuilder("NPRNewsStopIntent") \
+                .require("NPRNewsStopVerb") \
                 .require("NPRNewsKeyword").build()
         self.register_intent(intent, self.handle_stop)
 
+        if AudioService:
+            self.audioservice = AudioService(self.emitter)
 
     def handle_intent(self, message):
         try:
@@ -57,9 +64,13 @@ class NPRNewsSkill(MycroftSkill):
 
             # Pause for the intro, then start the new stream
             time.sleep(4)
-            self.process = play_mp3(
-                re.sub(
-                    'https', 'http', data['entries'][0]['links'][0]['href']))
+            url = re.sub('https', 'http',
+                         data['entries'][0]['links'][0]['href'])
+            # if audio service module is available use it
+            if self.audioservice:
+                self.audioservice.play(url, message.data['utterance'])
+            else: # othervice use normal mp3 playback
+                self.process = play_mp3(url)
 
         except Exception as e:
             LOGGER.error("Error: {0}".format(e))
@@ -72,7 +83,6 @@ class NPRNewsSkill(MycroftSkill):
             self.process.terminate()
             self.process.wait()
             self.speak_dialog('npr.news.stop')
-
 
 
 def create_skill():
