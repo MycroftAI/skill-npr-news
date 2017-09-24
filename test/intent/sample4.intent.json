@@ -1,5 +1,5 @@
 {
-  "utterance": "what are the latest news",
+  "utterance": "what is the latest news",
   "intent_type": "NPRNewsIntent",
   "intent": {
     "NPRNewsKeyword": "news"
