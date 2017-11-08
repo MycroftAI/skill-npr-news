@@ -58,6 +58,7 @@ class NPRNewsSkill(MycroftSkill):
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
+            # if news is already playing, stop it silently
             self.stop()
 
             self.speak_dialog('npr.news')
@@ -77,16 +78,15 @@ class NPRNewsSkill(MycroftSkill):
 
     def handle_stop(self, message):
         self.stop()
+        self.speak_dialog('npr.news.stop')
 
     def stop(self):
         if self.audioservice:
-            self.audioservice.pause()
-            self.speak_dialog('npr.news.stop')
+            self.audioservice.stop()
         else:
             if self.process and self.process.poll() is None:
                 self.process.terminate()
                 self.process.wait()
-                self.speak_dialog('npr.news.stop')
 
 
 def create_skill():
