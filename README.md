@@ -1,8 +1,15 @@
-# NPR News Skill
+## npr news skill
+Plays the news from NPR via audio
 
-## Usage:
-* `news`
-* `tell me news`
-* `stop news`
-* `end news`
+## Description 
+Plays the news from NPR via audio source
+
+## Examples 
+* "news"
+* "tell me news"
+* "stop news"
+* "end news"
+
+## Credits 
+Mycroft AI
 
