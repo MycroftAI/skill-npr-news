@@ -1,0 +1,31 @@
+{
+ "name": "Mycroft News Player",
+ "skillMetadata": {
+        "sections": [
+            {
+                "name": "Configuration",
+                "fields": [
+                    {
+                        "type": "label",
+                        "label": "By default this skill reads the NPR hourly news broadcast. You can select alternate options from the menu to get built-in podcasts, or you can specify a particular URL to use for your news feed."
+                    },
+                    {
+                        "name": "pre_select",
+                        "type": "select",
+                        "label": "Options",
+                        "options": "Other URL (please define below)|not_set;NPR|http://www.npr.org/rss/podcast.php?id=500005;BBC|http://podcasts.files.bbci.co.uk/p02nq0gn.rss;CBC.ca|http://www.cbc.ca/podcasting/includes/hourlynews.xml",
+                        "value": "http://www.npr.org/rss/podcast.php?id=500005"
+                    },
+                    {
+                        "name": "url_rss",
+                        "type": "text",
+                        "label": "News Feed url:",
+                        "value": ""
+                    }
+
+                ]
+            }
+        ]
+    }
+ 
+}
