@@ -35,21 +35,27 @@ __author__ = 'jdorleans'
 LOGGER = getLogger(__name__)
 
 
-class NPRNewsSkill(MycroftSkill):
+class NewsSkill(MycroftSkill):
     def __init__(self):
-        super(NPRNewsSkill, self).__init__(name="NPRNewsSkill")
-        self.url_rss = self.config['url_rss']
+        super(NewsSkill, self).__init__(name="NewsSkill")
+        self.pre_select=self.settings.get("pre_select")
+        self.url_rss = self.settings.get("url_rss") 
         self.process = None
         self.audioservice = None
 
     def initialize(self):
-        intent = IntentBuilder("NPRNewsIntent").require(
-            "NPRNewsKeyword").build()
+        self.pre_select=self.settings.get("pre_select")
+        if "not_set" in self.pre_select:
+            self.url_rss= self.settings.get("url_rss")
+        else:
+            self.url_rss=self.pre_select;
+        intent = IntentBuilder("NewsIntent").require(
+            "NewsKeyword").build()
         self.register_intent(intent, self.handle_intent)
 
-        intent = IntentBuilder("NPRNewsStopIntent") \
-                .require("NPRNewsStopVerb") \
-                .require("NPRNewsKeyword").build()
+        intent = IntentBuilder("NewsStopIntent") \
+                .require("NewsStopVerb") \
+                .require("NewsKeyword").build()
         self.register_intent(intent, self.handle_stop)
 
         if AudioService:
@@ -61,7 +67,7 @@ class NPRNewsSkill(MycroftSkill):
             # if news is already playing, stop it silently
             self.stop()
 
-            self.speak_dialog('npr.news')
+            self.speak_dialog('news')
 
             # Pause for the intro, then start the new stream
             time.sleep(4)
@@ -78,7 +84,7 @@ class NPRNewsSkill(MycroftSkill):
 
     def handle_stop(self, message):
         self.stop()
-        self.speak_dialog('npr.news.stop')
+        self.speak_dialog('news.stop')
 
     def stop(self):
         if self.audioservice:
@@ -90,4 +96,4 @@ class NPRNewsSkill(MycroftSkill):
 
 
 def create_skill():
-    return NPRNewsSkill()
+    return NewsSkill()
