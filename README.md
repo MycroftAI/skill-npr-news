@@ -1,14 +1,16 @@
-## news skill
-Plays the news from a configurable RSS based audio feed
+## Hourly News
+Plays the latest news report
 
 ## Description 
-Plays the news from a configurable RSS based audio feed. The default configuration plays the NPR hourly news broadcast.
+Plays the latest news from a configurable RSS based audio feed.  
+By default the NPR hourly news broadcast is used, but you can chose
+from other news feeds including the BBC, AP, CBC.ca, CNN,
+PBS or Fox.  See the setting at [home.mycroft.ai](https://home.mycroft.ai/#/skill).
 
 ## Examples 
-* "news"
-* "tell me news"
-* "stop news"
-* "end news"
+* "Play the news"
+* "Tell me the news"
+* "What's the latest news"
 
 ## Credits 
 Mycroft AI
