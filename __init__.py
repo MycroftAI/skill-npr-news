@@ -34,20 +34,24 @@ class NewsSkill(MycroftSkill):
         self.audioservice = None
 
     def initialize(self):
-        self.pre_select = self.settings.get("pre_select")
-        self.url_rss = self.settings.get("url_rss")
-        if "not_set" in self.pre_select:
-            # Use a custom RSS URL
-            self.url_rss = self.settings.get("url_rss")
-        else:
-            # Use the selected preset's URL
-            self.url_rss = self.pre_select
-
-        if not self.url_rss and 'url_rss' in self.config:
-            self.url_rss = self.config['url_rss']
-
         if AudioService:
             self.audioservice = AudioService(self.emitter)
+
+    @property
+    def url_rss(self):
+        pre_select = self.settings.get("pre_select")
+        url_rss = self.settings.get("url_rss")
+        if "not_set" in pre_select:
+            # Use a custom RSS URL
+            url_rss = self.settings.get("url_rss")
+        else:
+            # Use the selected preset's URL
+            url_rss = pre_select
+
+        if not url_rss and 'url_rss' in self.config:
+            url_rss = self.config['url_rss']
+
+        return url_rss
 
     @intent_handler(IntentBuilder("").require("Play").require("News"))
     def handle_intent(self, message):
