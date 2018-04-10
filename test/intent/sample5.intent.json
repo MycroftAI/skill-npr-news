@@ -1,8 +1,0 @@
-{
-  "utterance": "stop the news",
-  "intent_type": "NPRNewsStopIntent",
-  "intent": {
-    "NPRNewsKeyword": "news",
-    "NPRNewsStopVerb": "stop"
-  }
-}
