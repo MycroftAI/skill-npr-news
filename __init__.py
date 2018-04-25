@@ -39,7 +39,7 @@ class NewsSkill(MycroftSkill):
 
     @property
     def url_rss(self):
-        pre_select = self.settings.get("pre_select")
+        pre_select = self.settings.get("pre_select", "")
         url_rss = self.settings.get("url_rss")
         if "not_set" in pre_select:
             # Use a custom RSS URL
