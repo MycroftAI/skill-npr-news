@@ -1,7 +1,11 @@
 {
   "utterance": "what is the latest news",
-  "intent_type": "NPRNewsIntent",
+  "intent_type": "handle_intent",
   "intent": {
-    "NPRNewsKeyword": "news"
+    "Play": "what is",
+    "News": "news"
+  },
+  "expected_data": {
+      "__type__": "mycroft.audio.service.play"
   }
 }
