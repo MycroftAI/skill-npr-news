@@ -63,9 +63,20 @@ class NewsSkill(MycroftSkill):
             self.speak_dialog('news')
             wait_while_speaking()
 
-            # After the intro, start the news stream
+            # After the intro, find and start the news stream
+            i = 0
+            found_audio = False
+            # select the first link to an audio file
+            for link in data['entries'][0]['links']:
+                if 'audio' in link['type']:
+                    found_audio = True
+                    break
+                i = i+1
+            if not found_audio:
+                # fall back to using the first link in the entry
+                i = 0
             url = re.sub('https', 'http',
-                         data['entries'][0]['links'][0]['href'])
+                         data['entries'][0]['links'][i]['href'])
             # if audio service module is available use it
             if self.audioservice:
                 self.audioservice.play(url, message.data['utterance'])
