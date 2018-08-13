@@ -17,6 +17,7 @@ from os.path import dirname
 import re
 
 from adapt.intent import IntentBuilder
+from mycroft import intent_file_handler
 from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.audio import wait_while_speaking
 from mycroft.util.log import LOG
@@ -52,6 +53,13 @@ class NewsSkill(MycroftSkill):
             url_rss = self.config['url_rss']
 
         return url_rss
+
+
+    # Explict Padatious intent handler for "Play the news" to allow
+    # an override of the various music Adapt intents that use "Play"
+    @intent_file_handler('PlayNews.intent')
+    def handle_playnews(self, message):
+        self.handle_intent(message) 
 
     @intent_handler(IntentBuilder("").require("Play").require("News"))
     def handle_intent(self, message):
