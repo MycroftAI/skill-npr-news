@@ -1,4 +1,4 @@
-## News Skill
+## Latest news
 Listen to the latest news report from your favorite broadcast
 
 ## Description 
