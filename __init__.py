@@ -17,15 +17,10 @@ from os.path import dirname
 import re
 
 from adapt.intent import IntentBuilder
-from mycroft import intent_file_handler
 from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.audio import wait_while_speaking
-from mycroft.util.log import LOG
-try:
-    from mycroft.skills.audioservice import AudioService
-except:
-    from mycroft.util import play_mp3
-    AudioService = None
+from mycroft.skills.audioservice import AudioService
+from mycroft.messagebus.message import Message
 
 
 class NewsSkill(MycroftSkill):
@@ -35,8 +30,26 @@ class NewsSkill(MycroftSkill):
         self.audioservice = None
 
     def initialize(self):
-        if AudioService:
-            self.audioservice = AudioService(self.emitter)
+        self.audioservice = AudioService(self.emitter)
+        self.add_event('play:query', self.play__query)
+        self.add_event('play:start', self.play__start)
+
+    def play__query(self, message):
+        phrase = message.data["phrase"]
+        if self.voc_match(phrase, "News"):
+            self.bus.emit(message.response({"phrase": phrase,
+                                            "skill_id": self.skill_id,
+                                            "conf": "1.0"}))  # TODO: change conf based on match %
+
+    def play__start(self, message):
+        if message.data["skill_id"] != self.skill_id:
+            # Not for this skill!
+            return
+
+        phrase = message.data["phrase"]
+        data = message.data["callback_data"]
+        msg = Message(message.type, data={ 'utterance': phrase })
+        self.handle_intent(msg)
 
     @property
     def url_rss(self):
@@ -54,19 +67,10 @@ class NewsSkill(MycroftSkill):
 
         return url_rss
 
-
-    # Explict Padatious intent handler for "Play the news" to allow
-    # an override of the various music Adapt intents that use "Play"
-    @intent_file_handler('PlayNews.intent')
-    def handle_playnews(self, message):
-        self.handle_intent(message) 
-
     @intent_handler(IntentBuilder("").require("Play").require("News"))
     def handle_intent(self, message):
         try:
             data = feedparser.parse(self.url_rss)
-            # Stop anything already playing
-            self.stop()
 
             self.speak_dialog('news')
             wait_while_speaking()
@@ -74,22 +78,20 @@ class NewsSkill(MycroftSkill):
             # After the intro, start the news stream
             url = re.sub('https', 'http',
                          data['entries'][0]['links'][0]['href'])
-            # if audio service module is available use it
-            if self.audioservice:
-                self.audioservice.play(url, message.data['utterance'])
-            else:  # othervice use normal mp3 playback
-                self.process = play_mp3(url)
+
+            # Inlcude the utterance, it might include controlls for the
+            # playback system, e.g. "Play the news on the stereo"
+            self.audioservice.play(url, message.data['utterance'])
 
         except Exception as e:
-            LOG.error("Error: {0}".format(e))
+            self.log.error("Error: {0}".format(e))
 
     def stop(self):
-        if self.audioservice:
+        if self.audioservice.is_playing:
             self.audioservice.stop()
+            return True
         else:
-            if self.process and self.process.poll() is None:
-                self.process.terminate()
-                self.process.wait()
+            return False
 
 
 def create_skill():
