@@ -1,4 +1,4 @@
-# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/newspaper.svg' card_color='#22a7f0' width='50' height='50' style='vertical-align:bottom'/> Latest news
+# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/newspaper.svg' card_color='#000000' width='50' height='50' style='vertical-align:bottom'/> Latest news
 Listen to the latest news report from your favorite broadcast
 
 ## About 
