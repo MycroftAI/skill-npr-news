@@ -18,9 +18,7 @@ import re
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler
-
-# from mycroft.skills.core import CommonPlaySkill, CPSMatchLevel, intent_handler
-from .common_play_skill import CommonPlaySkill, CPSMatchLevel
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
 
 class NewsSkill(CommonPlaySkill):
@@ -29,6 +27,7 @@ class NewsSkill(CommonPlaySkill):
 
     def CPS__match_query_phrase(self, phrase):
         if self.voc_match(phrase, "News"):
+            # TODO: Match against NPR, BBC, etc
             return ("news", CPSMatchLevel.TITLE)
 
     def CPS__start(self, phrase, data):
