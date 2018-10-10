@@ -25,12 +25,12 @@ class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
 
-    def CPS__match_query_phrase(self, phrase):
+    def CPS_match_query_phrase(self, phrase):
         if self.voc_match(phrase, "News"):
             # TODO: Match against NPR, BBC, etc
             return ("news", CPSMatchLevel.TITLE)
 
-    def CPS__start(self, phrase, data):
+    def CPS_start(self, phrase, data):
         # Use the "latest news" intent handler
         self.handle_latest_news(None)
 
@@ -60,7 +60,7 @@ class NewsSkill(CommonPlaySkill):
             wait_while_speaking()
 
             # Begin the news stream
-            self.CPS__play(self.url_rss)
+            self.CPS_play(self.url_rss)
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
