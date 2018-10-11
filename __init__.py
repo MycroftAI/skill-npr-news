@@ -13,30 +13,26 @@
 # limitations under the License.
 
 import feedparser
-from os.path import dirname
 import re
 
 from adapt.intent import IntentBuilder
-from mycroft import intent_file_handler
-from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.audio import wait_while_speaking
-from mycroft.util.log import LOG
-try:
-    from mycroft.skills.audioservice import AudioService
-except:
-    from mycroft.util import play_mp3
-    AudioService = None
+from mycroft.skills.core import intent_handler
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
 
-class NewsSkill(MycroftSkill):
+class NewsSkill(CommonPlaySkill):
     def __init__(self):
-        super(NewsSkill, self).__init__(name="NewsSkill")
-        self.process = None
-        self.audioservice = None
+        super().__init__(name="NewsSkill")
 
-    def initialize(self):
-        if AudioService:
-            self.audioservice = AudioService(self.emitter)
+    def CPS_match_query_phrase(self, phrase):
+        if self.voc_match(phrase, "News"):
+            # TODO: Match against NPR, BBC, etc
+            return ("news", CPSMatchLevel.TITLE)
+
+    def CPS_start(self, phrase, data):
+        # Use the "latest news" intent handler
+        self.handle_latest_news(None)
 
     @property
     def url_rss(self):
@@ -52,44 +48,22 @@ class NewsSkill(MycroftSkill):
         if not url_rss and 'url_rss' in self.config:
             url_rss = self.config['url_rss']
 
-        return url_rss
+        data = feedparser.parse(url_rss)
+        return re.sub('https', 'http',
+                      data['entries'][0]['links'][0]['href'])
 
-
-    # Explict Padatious intent handler for "Play the news" to allow
-    # an override of the various music Adapt intents that use "Play"
-    @intent_file_handler('PlayNews.intent')
-    def handle_playnews(self, message):
-        self.handle_intent(message) 
-
-    @intent_handler(IntentBuilder("").require("Play").require("News"))
-    def handle_intent(self, message):
+    @intent_handler(IntentBuilder("").require("Latest").require("News"))
+    def handle_latest_news(self, message):
         try:
-            data = feedparser.parse(self.url_rss)
-            # Stop anything already playing
-            self.stop()
-
+            # Speak an intro
             self.speak_dialog('news')
             wait_while_speaking()
 
-            # After the intro, start the news stream
-            url = re.sub('https', 'http',
-                         data['entries'][0]['links'][0]['href'])
-            # if audio service module is available use it
-            if self.audioservice:
-                self.audioservice.play(url, message.data['utterance'])
-            else:  # othervice use normal mp3 playback
-                self.process = play_mp3(url)
+            # Begin the news stream
+            self.CPS_play(self.url_rss)
 
         except Exception as e:
-            LOG.error("Error: {0}".format(e))
-
-    def stop(self):
-        if self.audioservice:
-            self.audioservice.stop()
-        else:
-            if self.process and self.process.poll() is None:
-                self.process.terminate()
-                self.process.wait()
+            self.log.error("Error: {0}".format(e))
 
 
 def create_skill():
