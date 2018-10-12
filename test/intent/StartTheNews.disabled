@@ -1,9 +1,6 @@
 {
-  "utterance": "play news",
-  "intent_type": "PlayNews.intent",
+  "utterance": "start the news",
   "expected_data": {
       "__type__": "mycroft.audio.service.play"
   }
 }
-
-
