@@ -14,16 +14,29 @@
 
 import feedparser
 import re
+import os
+import subprocess
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
+from requests import Session
+
+STREAM = '/tmp/stream'
+
+def find_mime(url):
+    mime = 'audio/mpeg'
+    response = Session().head(url, allow_redirects=True)
+    if 200 <= response.status_code < 300:
+        mime = response.headers['content-type']
+    return mime
 
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
+        self.curl = None
 
     def CPS_match_query_phrase(self, phrase):
         if self.voc_match(phrase, "News"):
@@ -49,21 +62,37 @@ class NewsSkill(CommonPlaySkill):
             url_rss = self.config['url_rss']
 
         data = feedparser.parse(url_rss)
-        return re.sub('https', 'http',
-                      data['entries'][0]['links'][0]['href'])
+        return data['entries'][0]['links'][0]['href']
 
     @intent_handler(IntentBuilder("").require("Latest").require("News"))
     def handle_latest_news(self, message):
         try:
-            # Speak an intro
-            self.speak_dialog('news')
-            wait_while_speaking()
+            self.stop()
 
+            mime = find_mime(self.url_rss)
+            # (Re)create Fifo
+            if os.path.exists(STREAM):
+                os.remove(STREAM)
+            self.log.debug('Creating fifo')
+            os.mkfifo(STREAM)
+
+            self.log.debug('Running curl {}'.format(self.url_rss))
+            self.curl = subprocess.Popen(
+                'curl -L "{}" > {}'.format(self.url_rss, STREAM),
+                shell=True)
+
+            # Speak an intro
+            self.speak_dialog('news', wait=True)
             # Begin the news stream
-            self.CPS_play(self.url_rss)
+            self.CPS_play(('file://' + STREAM, mime))
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
+
+    def stop(self):
+        if self.curl:
+            self.curl.kill()
+            self.curl.communicate()
 
 
 def create_skill():
