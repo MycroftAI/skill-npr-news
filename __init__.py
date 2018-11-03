@@ -61,9 +61,9 @@ class NewsSkill(CommonPlaySkill):
         if not url_rss and 'url_rss' in self.config:
             url_rss = self.config['url_rss']
 
-        data = feedparser.parse(url_rss)
-            # After the intro, find and start the news stream
-			# select the first link to an audio file
+        data = feedparser.parse(url_rss.strip())
+        # After the intro, find and start the news stream
+        # select the first link to an audio file
         for link in data['entries'][0]['links']:
             if 'audio' in link['type']:
                 media = link['href']
