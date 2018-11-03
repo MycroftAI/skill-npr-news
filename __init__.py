@@ -71,7 +71,7 @@ class NewsSkill(CommonPlaySkill):
         else:
             # fall back to using the first link in the entry
             media = data['entries'][0]['links'][0]['href']
-
+        self.log.info('Will play news from URL: '+media)
         return media
 
     @intent_handler(IntentBuilder("").require("Latest").require("News"))
