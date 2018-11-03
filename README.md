@@ -1,17 +1,25 @@
-## Hourly News
-Plays the latest news report
+# <img src='https://rawgithub.com/FortAwesome/Font-Awesome/master/advanced-options/raw-svg/solid/newspaper.svg' card_color='#000000' width='50' height='50' style='vertical-align:bottom'/> Latest news
+Listen to the latest news report from your favorite broadcast
 
-## Description 
-Plays the latest news from a configurable RSS based audio feed.  
-By default the NPR hourly news broadcast is used, but you can chose
-from other news feeds including the BBC, AP, CBC.ca, CNN,
-PBS or Fox.  See the setting at [home.mycroft.ai](https://home.mycroft.ai/#/skill).
+## About 
+Play the latest news from an RSS audio feed.  The National Public Radio (NPR)
+Hourly News is the default feed, or you can chose 
+from the BBC, Associated Press, CBC.ca, CNN, PBS or 
+Fox.  Select your favorite at:  
+[home.mycroft.ai](https://home.mycroft.ai/#/skill).
 
 ## Examples 
 * "Play the news"
 * "Tell me the news"
-* "What's the latest news"
+* "What's the news?"
 
 ## Credits 
-Mycroft AI
+Mycroft AI (@MycroftAI)
 
+## Category
+**Daily**
+Information
+
+## Tags
+#news
+#headlines

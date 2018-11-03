@@ -13,29 +13,39 @@
 # limitations under the License.
 
 import feedparser
-from os.path import dirname
 import re
+import os
+import subprocess
 
 from adapt.intent import IntentBuilder
-from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.audio import wait_while_speaking
-from mycroft.util.log import LOG
-try:
-    from mycroft.skills.audioservice import AudioService
-except:
-    from mycroft.util import play_mp3
-    AudioService = None
+from mycroft.skills.core import intent_handler
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 
+from requests import Session
 
-class NewsSkill(MycroftSkill):
+STREAM = '/tmp/stream'
+
+def find_mime(url):
+    mime = 'audio/mpeg'
+    response = Session().head(url, allow_redirects=True)
+    if 200 <= response.status_code < 300:
+        mime = response.headers['content-type']
+    return mime
+
+class NewsSkill(CommonPlaySkill):
     def __init__(self):
-        super(NewsSkill, self).__init__(name="NewsSkill")
-        self.process = None
-        self.audioservice = None
+        super().__init__(name="NewsSkill")
+        self.curl = None
 
-    def initialize(self):
-        if AudioService:
-            self.audioservice = AudioService(self.emitter)
+    def CPS_match_query_phrase(self, phrase):
+        if self.voc_match(phrase, "News"):
+            # TODO: Match against NPR, BBC, etc
+            return ("news", CPSMatchLevel.TITLE)
+
+    def CPS_start(self, phrase, data):
+        # Use the "latest news" intent handler
+        self.handle_latest_news(None)
 
     @property
     def url_rss(self):
@@ -51,45 +61,48 @@ class NewsSkill(MycroftSkill):
         if not url_rss and 'url_rss' in self.config:
             url_rss = self.config['url_rss']
 
-        return url_rss
-
-    @intent_handler(IntentBuilder("").require("Play").require("News"))
-    def handle_intent(self, message):
-        try:
-            data = feedparser.parse(self.url_rss)
-            # Stop anything already playing
-            self.stop()
-
-            self.speak_dialog('news')
-            wait_while_speaking()
-
+        data = feedparser.parse(url_rss)
             # After the intro, find and start the news stream
 			# select the first link to an audio file
-            for link in data['entries'][0]['links']:
-                if 'audio' in link['type']:
-                    media = link['href']
-                    break
-            else:
-                # fall back to using the first link in the entry
-                media = data['entries'][0]['links'][0]['href']
-            url = re.sub('https', 'http', media)
+        for link in data['entries'][0]['links']:
+            if 'audio' in link['type']:
+                media = link['href']
+                break
+        else:
+            # fall back to using the first link in the entry
+            media = data['entries'][0]['links'][0]['href']
 
-            # if audio service module is available use it
-            if self.audioservice:
-                self.audioservice.play(url, message.data['utterance'])
-            else:  # othervice use normal mp3 playback
-                self.process = play_mp3(url)
+        return media
+
+    @intent_handler(IntentBuilder("").require("Latest").require("News"))
+    def handle_latest_news(self, message):
+        try:
+            self.stop()
+
+            mime = find_mime(self.url_rss)
+            # (Re)create Fifo
+            if os.path.exists(STREAM):
+                os.remove(STREAM)
+            self.log.debug('Creating fifo')
+            os.mkfifo(STREAM)
+
+            self.log.debug('Running curl {}'.format(self.url_rss))
+            self.curl = subprocess.Popen(
+                'curl -L "{}" > {}'.format(self.url_rss, STREAM),
+                shell=True)
+
+            # Speak an intro
+            self.speak_dialog('news', wait=True)
+            # Begin the news stream
+            self.CPS_play(('file://' + STREAM, mime))
 
         except Exception as e:
-            LOG.error("Error: {0}".format(e))
+            self.log.error("Error: {0}".format(e))
 
     def stop(self):
-        if self.audioservice:
-            self.audioservice.stop()
-        else:
-            if self.process and self.process.poll() is None:
-                self.process.terminate()
-                self.process.wait()
+        if self.curl:
+            self.curl.kill()
+            self.curl.communicate()
 
 
 def create_skill():

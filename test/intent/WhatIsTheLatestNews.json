@@ -1,8 +1,8 @@
 {
-  "utterance": "start the news",
-  "intent_type": "handle_intent",
+  "utterance": "what is the latest news",
+  "intent_type": "handle_latest_news",
   "intent": {
-    "Play": "start",
+    "Latest": "what is",
     "News": "news"
   },
   "expected_data": {

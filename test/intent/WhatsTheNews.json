@@ -1,13 +1,11 @@
 {
-  "utterance": "play news",
-  "intent_type": "handle_intent",
+  "utterance": "what's the news",
+  "intent_type": "handle_latest_news",
   "intent": {
-    "Play": "play",
+    "Latest": "what is",
     "News": "news"
   },
   "expected_data": {
       "__type__": "mycroft.audio.service.play"
   }
 }
-
-
