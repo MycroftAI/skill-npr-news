@@ -14,7 +14,7 @@
                         "name": "pre_select",
                         "type": "select",
                         "label": "Options",
-                        "options": "Other URL (please define below)|not_set;NPR|http://www.npr.org/rss/podcast.php?id=500005;AP Hourly Radio News|http://www.spreaker.com/show/1401466/episodes/feed;BBC|http://podcasts.files.bbci.co.uk/p02nq0gn.rss;CBC.ca|http://www.cbc.ca/podcasting/includes/hourlynews.xml;FOX News|http://feeds.foxnewsradio.com/FoxNewsRadio;PBS NewsHour Daily|https://www.pbs.org/newshour/feeds/rss/podcasts/show;DLF (German)|https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml;WDR (German)|https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast",
+                        "options": "Other URL (please define below)|not_set;NPR|http://www.npr.org/rss/podcast.php?id=500005;AP Hourly Radio News|http://www.spreaker.com/show/1401466/episodes/feed;BBC|http://podcasts.files.bbci.co.uk/p02nq0gn.rss;CBC.ca|http://www.cbc.ca/podcasting/includes/hourlynews.xml;FOX News|http://feeds.foxnewsradio.com/FoxNewsRadio;PBS NewsHour Daily|https://www.pbs.org/newshour/feeds/rss/podcasts/show;YLE (finnish)|https://feeds.yle.fi/areena/v1/series/1-1440981.rss;DLF (German)|https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml;WDR (German)|https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast",
                         "value": "http://www.npr.org/rss/podcast.php?id=500005"
                     },
                     {
