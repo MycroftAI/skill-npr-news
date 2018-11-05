@@ -31,6 +31,7 @@ def find_mime(url):
     response = Session().head(url, allow_redirects=True)
     if 200 <= response.status_code < 300:
         mime = response.headers['content-type']
+    response.close()
     return mime
 
 class NewsSkill(CommonPlaySkill):
@@ -69,7 +70,6 @@ class NewsSkill(CommonPlaySkill):
         try:
             self.stop()
 
-            mime = find_mime(self.url_rss)
             # (Re)create Fifo
             if os.path.exists(STREAM):
                 os.remove(STREAM)
@@ -84,6 +84,7 @@ class NewsSkill(CommonPlaySkill):
             # Speak an intro
             self.speak_dialog('news', wait=True)
             # Begin the news stream
+            mime = find_mime(self.url_rss)
             self.CPS_play(('file://' + STREAM, mime))
 
         except Exception as e:
