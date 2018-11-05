@@ -1,0 +1,8 @@
+{
+  "play_start": {
+    "phrase": "the news",
+    "callback_data": {
+    }
+  },
+  "expected_data": {"__type__": "mycroft.audio.service.play"}
+}

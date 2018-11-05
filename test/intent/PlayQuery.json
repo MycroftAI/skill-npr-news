@@ -1,0 +1,7 @@
+{
+  "play_query": "the news",
+  "play_query_match": {
+    "phrase": "the news",
+    "confidence_threshold":  0.8
+  }
+}
