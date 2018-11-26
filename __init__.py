@@ -61,8 +61,18 @@ class NewsSkill(CommonPlaySkill):
         if not url_rss and 'url_rss' in self.config:
             url_rss = self.config['url_rss']
 
-        data = feedparser.parse(url_rss)
-        return data['entries'][0]['links'][0]['href']
+        data = feedparser.parse(url_rss.strip())
+        # After the intro, find and start the news stream
+        # select the first link to an audio file
+        for link in data['entries'][0]['links']:
+            if 'audio' in link['type']:
+                media = link['href']
+                break
+        else:
+            # fall back to using the first link in the entry
+            media = data['entries'][0]['links'][0]['href']
+        self.log.info('Will play news from URL: '+media)
+        return media
 
     @intent_handler(IntentBuilder("").require("Latest").require("News"))
     def handle_latest_news(self, message):
