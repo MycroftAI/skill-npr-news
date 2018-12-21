@@ -100,9 +100,15 @@ class NewsSkill(CommonPlaySkill):
             self.log.error("Error: {0}".format(e))
 
     def stop(self):
+        """ Stop download process if it's running. """
         if self.curl:
-            self.curl.kill()
-            self.curl.communicate()
+            try:
+                self.curl.kill()
+                self.curl.communicate()
+            except Exception as e:
+                self.log.error('Could not stop curl: {}'.format(repr(e)))
+            finally:
+                self.curl = None
 
 
 def create_skill():
