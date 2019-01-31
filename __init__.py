@@ -26,6 +26,22 @@ from requests import Session
 
 STREAM = '/tmp/stream'
 
+# NOTE: This has to be in synch with the settingsmeta options
+# TODO: Better language support -- this mixes new sources regardless of languages
+FEEDS = {
+    "other" : None,
+    "custom" : None,
+    "BBC" : "http://podcasts.files.bbci.co.uk/p02nq0gn.rss",
+    "NPR" : "http://www.npr.org/rss/podcast.php?id=500005",
+    "AP" : "http://www.spreaker.com/show/1401466/episodes/feed;BBC|http://podcasts.files.bbci.co.uk/p02nq0gn.rss",
+    "CBC" : "http://www.cbc.ca/podcasting/includes/hourlynews.xml",
+    "FOX" : "http://feeds.foxnewsradio.com/FoxNewsRadio",
+    "PBS" : "https://www.pbs.org/newshour/feeds/rss/podcasts/show",
+    "YLE" : "https://feeds.yle.fi/areena/v1/series/1-1440981.rss",
+    "DLF" : "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml",
+    "WDR" : "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"
+}
+
 def find_mime(url):
     mime = 'audio/mpeg'
     response = Session().head(url, allow_redirects=True)
@@ -39,24 +55,40 @@ class NewsSkill(CommonPlaySkill):
         self.curl = None
 
     def CPS_match_query_phrase(self, phrase):
+        # Look for a specific news provider
+        phrase = phrase.lower().split()
+        for source in FEEDS:
+            if source.lower() in phrase:
+                if self.voc_match(phrase, "News"):
+                    return (source+" news", CPSMatchLevel.EXACT)
+                else:
+                    return (source, CPSMatchLevel.TITLE)
+
         if self.voc_match(phrase, "News"):
-            # TODO: Match against NPR, BBC, etc
             return ("news", CPSMatchLevel.TITLE)
 
     def CPS_start(self, phrase, data):
         # Use the "latest news" intent handler
+        for source in FEEDS:
+            if source.lower() in phrase.lower():
+                self.handle_latest_news(rss=FEEDS[source])
+                return
+
+        # Just use the default news player
         self.handle_latest_news(None)
 
-    @property
-    def url_rss(self):
-        pre_select = self.settings.get("pre_select", "")
-        url_rss = self.settings.get("url_rss")
-        if "not_set" in pre_select:
-            # Use a custom RSS URL
-            url_rss = self.settings.get("url_rss")
+    def get_feed(self, url=None):
+        if url:
+            url_rss = url
         else:
-            # Use the selected preset's URL
-            url_rss = pre_select
+            pre_select = self.settings.get("pre_select", "")
+            url_rss = self.settings.get("url_rss")
+            if "not_set" in pre_select:
+                # Use a custom RSS URL
+                url_rss = self.settings.get("url_rss")
+            else:
+                # Use the selected preset's URL
+                url_rss = pre_select
 
         if not url_rss and 'url_rss' in self.config:
             url_rss = self.config['url_rss']
@@ -75,20 +107,21 @@ class NewsSkill(CommonPlaySkill):
         return media
 
     @intent_handler(IntentBuilder("").require("Latest").require("News"))
-    def handle_latest_news(self, message):
+    def handle_latest_news(self, message=None, rss=None):
         try:
             self.stop()
 
-            mime = find_mime(self.url_rss)
+            url = self.get_feed(rss)
+            mime = find_mime(url)
             # (Re)create Fifo
             if os.path.exists(STREAM):
                 os.remove(STREAM)
             self.log.debug('Creating fifo')
             os.mkfifo(STREAM)
 
-            self.log.debug('Running curl {}'.format(self.url_rss))
+            self.log.debug('Running curl {}'.format(url))
             self.curl = subprocess.Popen(
-                'curl -L "{}" > {}'.format(self.url_rss, STREAM),
+                'curl -L "{}" > {}'.format(url, STREAM),
                 shell=True)
 
             # Speak an intro
