@@ -60,22 +60,22 @@ class NewsSkill(CommonPlaySkill):
         for source in FEEDS:
             if source.lower() in phrase:
                 if self.voc_match(phrase, "News"):
-                    return (source+" news", CPSMatchLevel.EXACT)
+                    return (source+" news", CPSMatchLevel.EXACT,
+                            {"feed": source})
                 else:
-                    return (source, CPSMatchLevel.TITLE)
+                    return (source, CPSMatchLevel.TITLE,
+                            {"feed": source})
 
         if self.voc_match(phrase, "News"):
             return ("news", CPSMatchLevel.TITLE)
 
     def CPS_start(self, phrase, data):
-        # Use the "latest news" intent handler
-        for source in FEEDS:
-            if source.lower() in phrase.lower():
-                self.handle_latest_news(rss=FEEDS[source])
-                return
-
-        # Just use the default news player
-        self.handle_latest_news(None)
+        if data and "feed" in data:
+            # Play the requested news service
+            self.handle_latest_news(rss=FEEDS[data["feed"]])
+        else:
+            # Just use the default news feed
+            self.handle_latest_news(None)
 
     def get_feed(self, url=None):
         if url:
