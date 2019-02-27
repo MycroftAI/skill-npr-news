@@ -56,11 +56,11 @@ class NewsSkill(CommonPlaySkill):
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
-        phrase = phrase.lower().split()
+        phrase = ' '.join(phrase.lower().split())
         for source in FEEDS:
             if source.lower() in phrase:
                 if self.voc_match(phrase, "News"):
-                    return (source+" news", CPSMatchLevel.EXACT,
+                    return (source + " news", CPSMatchLevel.EXACT,
                             {"feed": source})
                 else:
                     return (source, CPSMatchLevel.TITLE,
