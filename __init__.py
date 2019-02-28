@@ -78,9 +78,8 @@ class NewsSkill(CommonPlaySkill):
             self.handle_latest_news(None)
 
     def get_feed(self, url=None):
-        if url:
-            url_rss = url
-        else:
+        url_rss = url
+        if not url_rss:
             pre_select = self.settings.get("pre_select", "")
             url_rss = self.settings.get("url_rss")
             if "not_set" in pre_select:
@@ -89,9 +88,9 @@ class NewsSkill(CommonPlaySkill):
             else:
                 # Use the selected preset's URL
                 url_rss = pre_select
-
-        if not url_rss and 'url_rss' in self.config:
-            url_rss = self.config['url_rss']
+                
+        if not url_rss:
+            url_rss = FEEDS["NPR"]
 
         data = feedparser.parse(url_rss.strip())
         # After the intro, find and start the news stream
@@ -142,6 +141,7 @@ class NewsSkill(CommonPlaySkill):
                 self.log.error('Could not stop curl: {}'.format(repr(e)))
             finally:
                 self.curl = None
+            return True
 
 
 def create_skill():
