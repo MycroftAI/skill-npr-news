@@ -19,9 +19,9 @@ import subprocess
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
-from mycroft.skills.core import intent_handler
+from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-
+import traceback
 from requests import Session
 
 STREAM = '/tmp/stream'
@@ -33,7 +33,7 @@ FEEDS = {
     "custom" : None,
     "BBC" : "http://podcasts.files.bbci.co.uk/p02nq0gn.rss",
     "NPR" : "http://www.npr.org/rss/podcast.php?id=500005",
-    "AP" : "http://www.spreaker.com/show/1401466/episodes/feed;BBC|http://podcasts.files.bbci.co.uk/p02nq0gn.rss",
+    "AP" : "http://www.spreaker.com/show/1401466/episodes/feed",
     "CBC" : "http://www.cbc.ca/podcasting/includes/hourlynews.xml",
     "FOX" : "http://feeds.foxnewsradio.com/FoxNewsRadio",
     "PBS" : "https://www.pbs.org/newshour/feeds/rss/podcasts/show",
@@ -105,6 +105,19 @@ class NewsSkill(CommonPlaySkill):
         self.log.info('Will play news from URL: '+media)
         return media
 
+    @intent_file_handler("PlayTheNews.intent")
+    def handle_latest_news_alt(self, message):
+        # Capture some alternative ways of requesting the news via Padatious
+        utt = message.data["utterance"]
+        match = self.CPS_match_query_phrase(utt)
+        if match and len(match) > 2:
+            self.log.info("Match: " + str(match))
+            rss = FEEDS[match[2]["feed"]]
+        else:
+            rss = None
+
+        self.handle_latest_news(message, rss)
+
     @intent_handler(IntentBuilder("").require("Latest").require("News"))
     def handle_latest_news(self, message=None, rss=None):
         try:
@@ -130,6 +143,8 @@ class NewsSkill(CommonPlaySkill):
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
+            self.log.debug("Traceback: {}".format(traceback.format_exc()))
+            self.speak_dialog("could.not.start.the.news.feed")
 
     def stop(self):
         """ Stop download process if it's running. """
