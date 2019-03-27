@@ -39,7 +39,9 @@ FEEDS = {
     "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
     "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss"),
     "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
-    "WDR" : ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast")
+    "WDR" : ("WDR",
+        "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
+    "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795")
 }
 
 
