@@ -42,6 +42,7 @@ FEEDS = {
     "WDR" : ("WDR",
         "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
     "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795")
+    "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381")
 }
 
 
