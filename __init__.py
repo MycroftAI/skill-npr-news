@@ -15,6 +15,7 @@
 import feedparser
 import os
 import subprocess
+import time
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
@@ -74,8 +75,14 @@ class NewsSkill(CommonPlaySkill):
         super().__init__(name="NewsSkill")
         self.curl = None
         self.now_playing = None
+        self.last_message = None
         self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
         self.country_code = self.location['city']['state']['country']['code']
+
+    def initialize(self):
+        time.sleep(1)
+        self.log.info('Disabling restart intent')
+        self.disable_intent('restart_playback')
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
@@ -169,7 +176,6 @@ class NewsSkill(CommonPlaySkill):
     def handle_latest_news(self, message=None, feed=None):
         try:
             self.stop()
-
             rss = None
             self.now_playing = None
             if feed and feed in FEEDS:
@@ -196,6 +202,10 @@ class NewsSkill(CommonPlaySkill):
             wait_while_speaking()
             # Begin the news stream
             self.CPS_play(('file://' + self.STREAM, mime))
+            self.last_message = (True, message)
+            print(self.last_message)
+            self.enable_intent('restart_playback')
+
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
@@ -207,7 +217,21 @@ class NewsSkill(CommonPlaySkill):
         # Catch simple phrases like "give me news"
         self.handle_latest_news(message=message, feed=feed)
 
+    @intent_handler(IntentBuilder('').require('Restart'))
+    def restart_playback(self, message):
+        print(self.location)
+        self.log.info('Restarting last message')
+        if self.last_message:
+            self.log.info('!!! NOW')
+            self.handle_latest_news(self.last_message[1])
+
     def stop(self):
+        # Disable restarting when stopped
+        if self.last_message:
+            print("DISABLING MESSAGE")
+            self.disable_intent('restart_playback')
+            self.last_message = None
+
         # Stop download process if it's running.
         if self.curl:
             try:
