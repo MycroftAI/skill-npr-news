@@ -105,11 +105,8 @@ class NewsSkill(CommonPlaySkill):
                 self.now_playing = None
             else:
                 # Use the selected preset's URL
-                url_rss = pre_select
-                # Look for the title
-                for feed in FEEDS:
-                    if FEEDS[feed][1] == url_rss:
-                        self.now_playing = FEEDS[feed][0]
+                self.now_playing = FEEDS[pre_select][0]
+                url_rss = FEEDS[pre_select][1]
 
         if not url_rss:
             # Default to NPR News
