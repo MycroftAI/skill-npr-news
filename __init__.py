@@ -30,18 +30,17 @@ from requests import Session
 FEEDS = {
     "other" : ("your custom feed", None),
     "custom" : ("your custom feed", None),
-    "BBC" : ("BBC News", "http://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
-    "NPR" : ("NPR News Now", "http://www.npr.org/rss/podcast.php?id=500005"),
+    "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
     "AP" :  ("AP Hourly Radio News", "http://www.spreaker.com/show/1401466/episodes/feed"),
+    "BBC" : ("BBC News", "http://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
     "CBC" : ("CBC.ca News", "http://www.cbc.ca/podcasting/includes/hourlynews.xml"),
-    "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
-    "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
-    "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss"),
     "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
-    "WDR" : ("WDR",
-        "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
     "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
-    "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381")
+    "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
+    "NPR" : ("NPR News Now", "http://www.npr.org/rss/podcast.php?id=500005"),
+    "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
+    "WDR" : ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
+    "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
 DEFAULT_FEED = {
