@@ -14,7 +14,7 @@
                         "name": "pre_select",
                         "type": "select",
                         "label": "Options",
-                        "options": "Other URL (please define below)|not_set;NPR|NPR;AP Hourly Radio News|AP;BBC|BBC;CBC.ca|CBC;FOX News|FOX;PBS NewsHour Daily|PBS;YLE (finnish)|YLE;DLF (German)|DLF;WDR (German)|WDR;Ekot (Swedish)|Ekot;ABC News (Australia)|ABC;RNZ News Bulletin (New Zealand)|RNZ",
+                        "options": "Other URL (please define below)|not_set;NPR|NPR;AP Hourly Radio News|AP;BBC|BBC;CBC.ca|CBC;FOX News|FOX;PBS NewsHour Daily|PBS;YLE (finnish)|YLE;DLF (German)|DLF;WDR (German)|WDR;Ekot (Swedish)|Ekot;ABC News (Australia)|ABC",
                         "value": "NPR"
                     },
                     {
