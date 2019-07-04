@@ -44,6 +44,15 @@ FEEDS = {
     "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381")
 }
 
+DEFAULT_FEED = {
+    "AU": "ABC",
+    "CA": "CBC",
+    "DE": "DLF",
+    "FI": "YLE",
+    "SE": "Ekot",
+    "UK": "BBC",
+    "US": "NPR"
+}
 
 def find_mime(url):
     mime = 'audio/mpeg'
@@ -58,6 +67,7 @@ class NewsSkill(CommonPlaySkill):
         self.curl = None
         self.now_playing = None
         self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
+        self.country_code = self.location['city']['state']['country']['code']
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
@@ -101,8 +111,12 @@ class NewsSkill(CommonPlaySkill):
 
         if not url_rss:
             # Default to NPR News
-            self.now_playing = FEEDS["NPR"][0]
-            url_rss = FEEDS["NPR"][1]
+            feed_code = "NPR"
+            # unless country level default exists
+            if DEFAULT_FEED.get(self.country_code):
+                feed_code = DEFAULT_FEED[self.country_code]
+            self.now_playing = FEEDS[feed_code][0]
+            url_rss = FEEDS[feed_code][1]
         return url_rss
 
     def get_feed(self, url_rss):
