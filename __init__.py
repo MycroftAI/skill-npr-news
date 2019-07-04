@@ -21,10 +21,9 @@ from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+from mycroft.util import get_cache_directory
 import traceback
 from requests import Session
-
-STREAM = '/tmp/stream'
 
 # NOTE: This has to be in synch with the settingsmeta options
 # TODO: Better language support -- this mixes new sources regardless of languages
@@ -58,6 +57,7 @@ class NewsSkill(CommonPlaySkill):
         super().__init__(name="NewsSkill")
         self.curl = None
         self.now_playing = None
+        self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
@@ -149,19 +149,19 @@ class NewsSkill(CommonPlaySkill):
             url = self.get_feed(rss)
             mime = find_mime(url)
             # (Re)create Fifo
-            if os.path.exists(STREAM):
-                os.remove(STREAM)
-            os.mkfifo(STREAM)
+            if os.path.exists(self.STREAM):
+                os.remove(self.STREAM)
+            os.mkfifo(self.STREAM)
 
             self.log.debug('Running curl {}'.format(url))
             self.curl = subprocess.Popen(
-                'curl -L "{}" > {}'.format(url, STREAM),
+                'curl -L "{}" > {}'.format(url, self.STREAM),
                 shell=True)
 
             # Show news title, if there is one
             wait_while_speaking()
             # Begin the news stream
-            self.CPS_play(('file://' + STREAM, mime))
+            self.CPS_play(('file://' + self.STREAM, mime))
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
