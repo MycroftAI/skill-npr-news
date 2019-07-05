@@ -39,12 +39,14 @@ FEEDS = {
     "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
     "NPR" : ("NPR News Now", "http://www.npr.org/rss/podcast.php?id=500005"),
     "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
+    "VRT" : ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
     "WDR" : ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
     "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
 DEFAULT_FEED = {
     "AU": "ABC",
+    "BE": "VRT",
     "CA": "CBC",
     "DE": "DLF",
     "FI": "YLE",
@@ -52,6 +54,8 @@ DEFAULT_FEED = {
     "UK": "BBC",
     "US": "NPR"
 }
+
+direct_play_filetypes = ['.mp3']
 
 def find_mime(url):
     mime = 'audio/mpeg'
@@ -116,6 +120,11 @@ class NewsSkill(CommonPlaySkill):
         return url_rss
 
     def get_feed(self, url_rss):
+        # If link is an audio file, just play it.
+        if url_rss[-4:] in direct_play_filetypes:
+            self.log.info('Playing news from URL: '+url_rss)
+            return url_rss
+        # Otherwise it is an RSS or XML feed
         data = feedparser.parse(url_rss.strip())
         # After the intro, find and start the news stream
         # select the first link to an audio file
@@ -123,9 +132,9 @@ class NewsSkill(CommonPlaySkill):
             if 'audio' in link['type']:
                 media = link['href']
                 break
-        else:
-            # fall back to using the first link in the entry
-            media = data['entries'][0]['links'][0]['href']
+            else:
+                # fall back to using the first link in the entry
+                media = data['entries'][0]['links'][0]['href']
         self.log.info('Playing news from URL: '+media)
         return media
 
