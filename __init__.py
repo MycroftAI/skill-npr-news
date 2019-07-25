@@ -44,23 +44,6 @@ FEEDS = {
     "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
-# Default feed per country code, if user has not selected a default
-DEFAULT_FEED = {
-    "AU": "ABC",
-    "BE": "VRT",
-    "CA": "CBC",
-    "DE": "DLF",
-    "FI": "YLE",
-    "SE": "Ekot",
-    "UK": "BBC",
-    "US": "NPR"
-}
-
-# Used to search for feeds based on longer titles or alternative common names
-ALT_FEED_NAMES = {
-    "associated press": "AP"
-}
-
 # If feed URL ends in specific filetype, just play it
 direct_play_filetypes = ['.mp3']
 
@@ -84,6 +67,10 @@ class NewsSkill(CommonPlaySkill):
         sleep(1)
         self.log.debug('Disabling restart intent')
         self.disable_intent('restart_playback')
+        # Default feed per country code, if user has not selected a default
+        self.default_feed = self.translate_namedvalues('country.default')
+        # Longer titles or alternative common names of feeds for searching
+        self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
@@ -98,14 +85,14 @@ class NewsSkill(CommonPlaySkill):
                     return (source, CPSMatchLevel.TITLE,
                             {"feed": source})
         # Check list of alternate names eg 'associated press' => 'AP'
-        for name in ALT_FEED_NAMES:
+        for name in self.alt_feed_names:
             if name.lower() in phrase:
                 if self.voc_match(phrase, "News"):
-                    return (ALT_FEED_NAMES[name] + " news", CPSMatchLevel.EXACT,
-                            {"feed": ALT_FEED_NAMES[name]})
+                    return (self.alt_feed_names[name] + " news", CPSMatchLevel.EXACT,
+                            {"feed": self.alt_feed_names[name]})
                 else:
-                    return (ALT_FEED_NAMES[name], CPSMatchLevel.TITLE,
-                            {"feed": ALT_FEED_NAMES[name]})
+                    return (self.alt_feed_names[name], CPSMatchLevel.TITLE,
+                            {"feed": self.alt_feed_names[name]})
 
         if self.voc_match(phrase, "News"):
             return ("news", CPSMatchLevel.TITLE)
@@ -136,8 +123,8 @@ class NewsSkill(CommonPlaySkill):
             # Default to NPR News
             feed_code = "NPR"
             # unless country level default exists
-            if DEFAULT_FEED.get(self.country_code):
-                feed_code = DEFAULT_FEED[self.country_code]
+            if self.default_feed.get(self.country_code):
+                feed_code = self.default_feed[self.country_code]
             self.now_playing = FEEDS[feed_code][0]
             url_rss = FEEDS[feed_code][1]
         return url_rss
