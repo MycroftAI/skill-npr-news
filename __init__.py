@@ -16,14 +16,15 @@ import feedparser
 import os
 import subprocess
 import time
+import traceback
+from requests import Session
+from time import sleep
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
-import traceback
-from requests import Session
 
 # NOTE: This has to be in sync with the settingsmeta options
 FEEDS = {
@@ -80,8 +81,8 @@ class NewsSkill(CommonPlaySkill):
         self.country_code = self.location['city']['state']['country']['code']
 
     def initialize(self):
-        time.sleep(1)
-        self.log.info('Disabling restart intent')
+        sleep(1)
+        self.log.debug('Disabling restart intent')
         self.disable_intent('restart_playback')
 
     def CPS_match_query_phrase(self, phrase):
@@ -203,7 +204,6 @@ class NewsSkill(CommonPlaySkill):
             # Begin the news stream
             self.CPS_play(('file://' + self.STREAM, mime))
             self.last_message = (True, message)
-            print(self.last_message)
             self.enable_intent('restart_playback')
 
 
@@ -219,16 +219,13 @@ class NewsSkill(CommonPlaySkill):
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):
-        print(self.location)
-        self.log.info('Restarting last message')
+        self.log.debug('Restarting last message')
         if self.last_message:
-            self.log.info('!!! NOW')
             self.handle_latest_news(self.last_message[1])
 
     def stop(self):
         # Disable restarting when stopped
         if self.last_message:
-            print("DISABLING MESSAGE")
             self.disable_intent('restart_playback')
             self.last_message = None
 
