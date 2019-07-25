@@ -55,6 +55,11 @@ DEFAULT_FEED = {
     "US": "NPR"
 }
 
+# Used to search for feeds based on longer titles or alternative common names
+ALT_FEED_NAMES = {
+    "associated press": "AP"
+}
+
 direct_play_filetypes = ['.mp3']
 
 def find_mime(url):
@@ -75,6 +80,7 @@ class NewsSkill(CommonPlaySkill):
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
         phrase = ' '.join(phrase.lower().split())
+
         for source in FEEDS:
             if source.lower() in phrase:
                 if self.voc_match(phrase, "News"):
@@ -83,6 +89,15 @@ class NewsSkill(CommonPlaySkill):
                 else:
                     return (source, CPSMatchLevel.TITLE,
                             {"feed": source})
+
+        for name in ALT_FEED_NAMES:
+            if name.lower() in phrase:
+                if self.voc_match(phrase, "News"):
+                    return (ALT_FEED_NAMES[name] + " news", CPSMatchLevel.EXACT,
+                            {"feed": ALT_FEED_NAMES[name]})
+                else:
+                    return (ALT_FEED_NAMES[name], CPSMatchLevel.TITLE,
+                            {"feed": ALT_FEED_NAMES[name]})
 
         if self.voc_match(phrase, "News"):
             return ("news", CPSMatchLevel.TITLE)
