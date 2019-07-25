@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import feedparser
-import re
 import os
 import subprocess
 
