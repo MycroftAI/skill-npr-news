@@ -2,7 +2,7 @@
 Listen to the latest news report from your favorite broadcast
 
 ## About
-Play the latest news from an RSS audio feed. A feed from your country will be used if available. Otherwise, the National Public Radio (NPR)
+Play the latest news from an RSS audio feed. Your device location will be used to provide a local feed from your country if available. Otherwise, the National Public Radio (NPR)
 Hourly News will be used. You can also choose your own default or add a custom audio feed at: [home.mycroft.ai](https://home.mycroft.ai/#/skill).
 
 Supported stations include:
