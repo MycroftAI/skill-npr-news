@@ -25,8 +25,7 @@ from mycroft.util import get_cache_directory
 import traceback
 from requests import Session
 
-# NOTE: This has to be in synch with the settingsmeta options
-# TODO: Better language support -- this mixes new sources regardless of languages
+# NOTE: This has to be in sync with the settingsmeta options
 FEEDS = {
     "other" : ("your custom feed", None),
     "custom" : ("your custom feed", None),
@@ -44,6 +43,7 @@ FEEDS = {
     "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
+# Default feed per country code, if user has not selected a default
 DEFAULT_FEED = {
     "AU": "ABC",
     "BE": "VRT",
@@ -60,6 +60,7 @@ ALT_FEED_NAMES = {
     "associated press": "AP"
 }
 
+# If feed URL ends in specific filetype, just play it
 direct_play_filetypes = ['.mp3']
 
 def find_mime(url):
@@ -80,7 +81,7 @@ class NewsSkill(CommonPlaySkill):
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
         phrase = ' '.join(phrase.lower().split())
-
+        # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
             if source.lower() in phrase:
                 if self.voc_match(phrase, "News"):
@@ -89,7 +90,7 @@ class NewsSkill(CommonPlaySkill):
                 else:
                     return (source, CPSMatchLevel.TITLE,
                             {"feed": source})
-
+        # Check list of alternate names eg 'associated press' => 'AP'
         for name in ALT_FEED_NAMES:
             if name.lower() in phrase:
                 if self.voc_match(phrase, "News"):
@@ -204,6 +205,7 @@ class NewsSkill(CommonPlaySkill):
 
     @intent_handler(IntentBuilder("").require("Give").require("News"))
     def handle_give_news(self, message=None, feed=None):
+        # Catch simple phrases like "give me news"
         self.handle_latest_news(message=message, feed=feed)
 
     def stop(self):
