@@ -187,6 +187,10 @@ class NewsSkill(CommonPlaySkill):
             self.log.debug("Traceback: {}".format(traceback.format_exc()))
             self.speak_dialog("could.not.start.the.news.feed")
 
+    @intent_handler(IntentBuilder("").require("Give").require("News"))
+    def handle_give_news(self, message=None, feed=None):
+        self.handle_latest_news(message=message, feed=feed)
+
     def stop(self):
         # Stop download process if it's running.
         if self.curl:
