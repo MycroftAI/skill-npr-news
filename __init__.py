@@ -18,7 +18,6 @@ import subprocess
 import time
 import traceback
 from requests import Session
-from time import sleep
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
@@ -64,7 +63,7 @@ class NewsSkill(CommonPlaySkill):
         self.country_code = self.location['city']['state']['country']['code']
 
     def initialize(self):
-        sleep(1)
+        time.sleep(1)
         self.log.debug('Disabling restart intent')
         self.disable_intent('restart_playback')
         # Default feed per country code, if user has not selected a default
