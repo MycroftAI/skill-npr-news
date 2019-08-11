@@ -32,7 +32,7 @@ FEEDS = {
     "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
     "AP" :  ("AP Hourly Radio News", "http://www.spreaker.com/show/1401466/episodes/feed"),
     "BBC" : ("BBC News", "http://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
-    "CBC" : ("CBC News", "http://www.cbc.ca/podcasting/includes/hourlynews.xml"),
+    "CBC" : ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
     "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
     "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
     "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
