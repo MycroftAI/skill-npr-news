@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from datetime import timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
+import re
+import requests
 import subprocess
 import time
 import traceback
-from requests import Session
 from urllib.parse import quote
+from pytz import timezone
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
@@ -27,10 +30,46 @@ from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
+from mycroft.util.time import now_local
 
 
 def image_path(filename):
     return 'file://' + join(dirname(abspath(__file__)), 'images', filename)
+
+
+def tsf():
+    """Custom inews fetcher for TSF news."""
+    feed = ('https://www.tsf.pt/stream/audio/{year}/{month:02d}/'
+            'noticias/{day:02d}/not{hour:02d}.mp3')
+    uri = None
+    i = 0
+    status = 404
+    date = now_local(timezone('Portugal'))
+    while status != 200 and i < 5:
+        date -= timedelta(hours=i)
+        uri = feed.format(hour=date.hour, year=date.year,
+                          month=date.month, day=date.day)
+        status = requests.get(uri).status_code
+        i += 1
+    if status != 200:
+        return None
+    return uri
+
+
+def gbp():
+    """Custom news fetcher for GBP news."""
+    feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
+    data = feedparser.parse(feed)
+    next_link = data['entries'][0]['links'][0]['href']
+    html = requests.get(next_link)
+    # Find the first mp3 link
+    # Note that the latest mp3 may not be news,
+    # but could be an interview, etc.
+    mp3_find = re.search(r'href="(?P<mp3>.+\.mp3)"'.encode(), html.content)
+    if mp3_find is None:
+        return None
+    url = mp3_find.group('mp3').decode('utf-8')
+    return url
 
 
 # NOTE: This has to be in sync with the settingsmeta options
@@ -67,7 +106,12 @@ FEEDS = {
                    'wdr-aktuell-news/wdr-aktuell-152.podcast',
             image_path('WDR')),
     'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
-            image_path('Yle.png'))
+            image_path('Yle.png')),
+    "GBP": ("Georgia Public Radio", gbp, None),
+    "RDP": ("RDP Africa", "http://www.rtp.pt//play/itunes/5442", None),
+    "RNE": ("National Spanish Radio",
+            "http://api.rtve.es/api/programas/36019/audios.rs", None),
+    "TSF": ("TSF Radio", tsf, None),
 }
 
 
@@ -77,7 +121,7 @@ DIRECT_PLAY_FILETYPES = ['.mp3']
 
 def find_mime(url):
     mime = 'audio/mpeg'
-    response = Session().head(url, allow_redirects=True)
+    response = requests.Session().head(url, allow_redirects=True)
     if 200 <= response.status_code < 300:
         mime = response.headers['content-type']
     return mime
@@ -150,9 +194,13 @@ class NewsSkill(CommonPlaySkill):
 
     def get_media_url(self, station_url):
         # If link is an audio file, just play it.
+        if callable(station_url):
+            return station_url()
+
         if station_url[-4:] in DIRECT_PLAY_FILETYPES:
             self.log.debug('Playing news from URL: {}'.format(station_url))
             return station_url
+
         # Otherwise it is an RSS or XML feed
         data = feedparser.parse(station_url.strip())
         # After the intro, find and start the news stream
