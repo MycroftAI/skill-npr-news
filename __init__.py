@@ -27,6 +27,7 @@ from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
+from mycroft.util.log import LOG
 from mycroft.util.time import now_local
 
 # NOTE: This has to be in sync with the settingsmeta options
@@ -40,7 +41,7 @@ FEEDS = {
     "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
     "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
     "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
-    "GBP" : ("Georgia Public Radio", "GBP"),
+    "GPB" : ("Georgia Public Radio", "GPB"),
     "NPR" : ("NPR News Now", "http://www.npr.org/rss/podcast.php?id=500005"),
     "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
     "RDP" : ("RDP Africa", "http://www.rtp.pt//play/itunes/5442"),
@@ -61,7 +62,7 @@ def find_mime(url):
         mime = response.headers['content-type']
     return mime
 
-class GetCustomFeed():
+class CustomFeed():
     def tsf():
         feed = "https://www.tsf.pt/stream/audio/{year}/{month:02d}/noticias/{day:02d}/not{hour:02d}.mp3"
         uri = None
@@ -77,14 +78,16 @@ class GetCustomFeed():
             return None
         return uri
 
-    def gbp():
+    def gpb():
         feed = "http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml"
         data = feedparser.parse(feed)
-        next_link = data["entries"][0]["links"][0]["href"]
+        next_link = None
+        for entry in data['entries']:
+            # Find the first mp3 link with "GPB {time} Headlines" in title
+            if 'GPB' in entry['title'] and 'Headlines' in entry['title']:
+                next_link = entry['links'][0]['href']
+                break
         html = requests.get(next_link)
-        # Find the first mp3 link
-        # Note that the latest mp3 may not be news,
-        # but could be an interview, etc.
         mp3_find = re.search(b'href="(?P<mp3>.+\.mp3)"', html.content)
         if mp3_find is None:
             return None
@@ -172,8 +175,8 @@ class NewsSkill(CommonPlaySkill):
             self.log.info('Playing news from URL: '+url_rss)
             return url_rss
         # If feed has custom function
-        if hasattr(GetCustomFeed, url_rss.lower()):
-            return getattr(GetCustomFeed, url_rss.lower())()
+        if hasattr(CustomFeed, url_rss.lower()):
+            return getattr(CustomFeed, url_rss.lower())()
         # Otherwise it is an RSS or XML feed
         data = feedparser.parse(url_rss.strip())
         # After the intro, find and start the news stream
