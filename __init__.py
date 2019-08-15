@@ -60,7 +60,12 @@ def gbp():
     """Custom news fetcher for GBP news."""
     feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
     data = feedparser.parse(feed)
-    next_link = data['entries'][0]['links'][0]['href']
+    next_link = None
+    for entry in data['entries']:
+        # Find the first mp3 link with "GPB {time} Headlines" in title
+        if 'GPB' in entry['title'] and 'Headlines' in entry['title']:
+            next_link = entry['links'][0]['href']
+            break
     html = requests.get(next_link)
     # Find the first mp3 link
     # Note that the latest mp3 may not be news,
