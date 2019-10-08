@@ -18,6 +18,7 @@ import subprocess
 import time
 import traceback
 from requests import Session
+from urllib.parse import quote
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
@@ -27,24 +28,25 @@ from mycroft.util import get_cache_directory
 
 # NOTE: This has to be in sync with the settingsmeta options
 FEEDS = {
-    "other" : ("your custom feed", None),
-    "custom" : ("your custom feed", None),
-    "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
-    "AP" :  ("AP Hourly Radio News", "https://www.spreaker.com/show/1401466/episodes/feed"),
-    "BBC" : ("BBC News", "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
-    "CBC" : ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
-    "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
-    "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
-    "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
-    "NPR" : ("NPR News Now", "https://www.npr.org/rss/podcast.php?id=500005"),
-    "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
-    "VRT" : ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
-    "WDR" : ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
-    "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
+    "other": ("your custom feed", None),
+    "custom": ("your custom feed", None),
+    "ABC": ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
+    "AP":  ("AP Hourly Radio News", "https://www.spreaker.com/show/1401466/episodes/feed"),
+    "BBC": ("BBC News", "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
+    "CBC": ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
+    "DLF": ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
+    "Ekot": ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
+    "FOX": ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
+    "NPR": ("NPR News Now", "https://www.npr.org/rss/podcast.php?id=500005"),
+    "PBS": ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
+    "VRT": ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
+    "WDR": ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
+    "YLE": ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
 # If feed URL ends in specific filetype, just play it
-direct_play_filetypes = ['.mp3']
+DIRECT_PLAY_FILETYPES = ['.mp3']
+
 
 def find_mime(url):
     mime = 'audio/mpeg'
@@ -53,6 +55,7 @@ def find_mime(url):
         mime = response.headers['content-type']
     return mime
 
+
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
@@ -60,7 +63,6 @@ class NewsSkill(CommonPlaySkill):
         self.now_playing = None
         self.last_message = None
         self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
-        self.country_code = self.location['city']['state']['country']['code']
 
     def initialize(self):
         time.sleep(1)
@@ -74,24 +76,19 @@ class NewsSkill(CommonPlaySkill):
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
         phrase = ' '.join(phrase.lower().split())
+        news_voc = " news" if self.voc_match(phrase, "News") else ""
+
         # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
             if source.lower() in phrase:
-                if self.voc_match(phrase, "News"):
-                    return (source + " news", CPSMatchLevel.EXACT,
-                            {"feed": source})
-                else:
-                    return (source, CPSMatchLevel.TITLE,
-                            {"feed": source})
+                return (source + news_voc, CPSMatchLevel.EXACT,
+                        {"feed": source})
         # Check list of alternate names eg 'associated press' => 'AP'
         for name in self.alt_feed_names:
             if name.lower() in phrase:
-                if self.voc_match(phrase, "News"):
-                    return (self.alt_feed_names[name] + " news", CPSMatchLevel.EXACT,
-                            {"feed": self.alt_feed_names[name]})
-                else:
-                    return (self.alt_feed_names[name], CPSMatchLevel.TITLE,
-                            {"feed": self.alt_feed_names[name]})
+                return (self.alt_feed_names[name] + news_voc,
+                        CPSMatchLevel.EXACT,
+                        {"feed": self.alt_feed_names[name]})
 
         if self.voc_match(phrase, "News"):
             return ("news", CPSMatchLevel.TITLE)
@@ -104,48 +101,43 @@ class NewsSkill(CommonPlaySkill):
             # Just use the default news feed
             self.handle_latest_news()
 
-    def get_rss(self, url=None):
-        url_rss = url
-        if not url_rss:
-            pre_select = self.settings.get("pre_select", "")
-            url_rss = self.settings.get("url_rss")
-            if "not_set" in pre_select:
-                # Use a custom RSS URL
-                url_rss = self.settings.get("url_rss")
-                self.now_playing = None
+    def get_station(self):
+        """ Get station to play. Prioritise selected station, then custom url.
+        If neither exist then fallback to default station for country. """
+        feed_code = self.settings.get("station", "not_set")
+        station_url = self.settings.get("custom_url", "")
+        if FEEDS.get(feed_code) is not None:
+            title, station_url = FEEDS[feed_code]
+        elif len(station_url) > 0:
+            title = FEEDS["custom"][0]
+        else:
+            country_code = self.location['city']['state']['country']['code']
+            if self.default_feed.get(country_code) is not None:
+                feed_code = self.default_feed[country_code]
             else:
-                # Use the selected preset's URL
-                self.now_playing = FEEDS[pre_select][0]
-                url_rss = FEEDS[pre_select][1]
+                feed_code = "NPR"
+            title, station_url = FEEDS[feed_code]
 
-        if not url_rss:
-            # Default to NPR News
-            feed_code = "NPR"
-            # unless country level default exists
-            if self.default_feed.get(self.country_code):
-                feed_code = self.default_feed[self.country_code]
-            self.now_playing = FEEDS[feed_code][0]
-            url_rss = FEEDS[feed_code][1]
-        return url_rss
+        return title, station_url
 
-    def get_feed(self, url_rss):
+    def get_media_url(self, station_url):
         # If link is an audio file, just play it.
-        if url_rss[-4:] in direct_play_filetypes:
-            self.log.info('Playing news from URL: '+url_rss)
-            return url_rss
+        if station_url[-4:] in DIRECT_PLAY_FILETYPES:
+            self.log.debug('Playing news from URL: {}'.format(station_url))
+            return station_url
         # Otherwise it is an RSS or XML feed
-        data = feedparser.parse(url_rss.strip())
+        data = feedparser.parse(station_url.strip())
         # After the intro, find and start the news stream
         # select the first link to an audio file
         for link in data['entries'][0]['links']:
             if 'audio' in link['type']:
-                media = link['href']
+                media_url = link['href']
                 break
             else:
                 # fall back to using the first link in the entry
-                media = data['entries'][0]['links'][0]['href']
-        self.log.info('Playing news from URL: '+media)
-        return media
+                media_url = data['entries'][0]['links'][0]['href']
+        self.log.debug('Playing news from URL: {}'.format(media_url))
+        return media_url
 
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
@@ -159,21 +151,20 @@ class NewsSkill(CommonPlaySkill):
 
         self.handle_latest_news(message, feed)
 
-    @intent_handler(IntentBuilder("").require("Latest").require("News"))
+    @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
     def handle_latest_news(self, message=None, feed=None):
         try:
             self.stop()
             rss = None
             self.now_playing = None
             if feed and feed in FEEDS:
-                self.now_playing = FEEDS[feed][0]
-                rss = FEEDS[feed][1]
-
+                self.now_playing, rss = FEEDS[feed]
+            else:
+                self.now_playing, rss = self.get_station()
             # Speak intro while downloading in background
-            rss = self.get_rss(rss)
             self.speak_dialog('news', data={"from": self.now_playing})
 
-            url = self.get_feed(rss)
+            url = self.get_media_url(rss)
             mime = find_mime(url)
             # (Re)create Fifo
             if os.path.exists(self.STREAM):
@@ -181,9 +172,8 @@ class NewsSkill(CommonPlaySkill):
             os.mkfifo(self.STREAM)
 
             self.log.debug('Running curl {}'.format(url))
-            self.curl = subprocess.Popen(
-                'curl -L "{}" > {}'.format(url, self.STREAM),
-                shell=True)
+            args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
+            self.curl = subprocess.Popen(args)
 
             # Show news title, if there is one
             wait_while_speaking()
@@ -192,16 +182,10 @@ class NewsSkill(CommonPlaySkill):
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
 
-
         except Exception as e:
             self.log.error("Error: {0}".format(e))
             self.log.debug("Traceback: {}".format(traceback.format_exc()))
             self.speak_dialog("could.not.start.the.news.feed")
-
-    @intent_handler(IntentBuilder("").require("Give").require("News"))
-    def handle_give_news(self, message=None, feed=None):
-        # Catch simple phrases like "give me news"
-        self.handle_latest_news(message=message, feed=feed)
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):
