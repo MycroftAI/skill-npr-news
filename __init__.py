@@ -28,24 +28,25 @@ from mycroft.util import get_cache_directory
 
 # NOTE: This has to be in sync with the settingsmeta options
 FEEDS = {
-    "other" : ("your custom feed", None),
-    "custom" : ("your custom feed", None),
-    "ABC" : ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
-    "AP" :  ("AP Hourly Radio News", "https://www.spreaker.com/show/1401466/episodes/feed"),
-    "BBC" : ("BBC News", "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
-    "CBC" : ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
-    "DLF" : ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
-    "Ekot" : ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
-    "FOX" : ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
-    "NPR" : ("NPR News Now", "https://www.npr.org/rss/podcast.php?id=500005"),
-    "PBS" : ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
-    "VRT" : ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
-    "WDR" : ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
-    "YLE" : ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
+    "other": ("your custom feed", None),
+    "custom": ("your custom feed", None),
+    "ABC": ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
+    "AP":  ("AP Hourly Radio News", "https://www.spreaker.com/show/1401466/episodes/feed"),
+    "BBC": ("BBC News", "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
+    "CBC": ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
+    "DLF": ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
+    "Ekot": ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
+    "FOX": ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
+    "NPR": ("NPR News Now", "https://www.npr.org/rss/podcast.php?id=500005"),
+    "PBS": ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
+    "VRT": ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
+    "WDR": ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
+    "YLE": ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
 }
 
 # If feed URL ends in specific filetype, just play it
-direct_play_filetypes = ['.mp3']
+DIRECT_PLAY_FILETYPES = ['.mp3']
+
 
 def find_mime(url):
     mime = 'audio/mpeg'
@@ -53,6 +54,7 @@ def find_mime(url):
     if 200 <= response.status_code < 300:
         mime = response.headers['content-type']
     return mime
+
 
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
@@ -120,8 +122,8 @@ class NewsSkill(CommonPlaySkill):
 
     def get_media_url(self, station_url):
         # If link is an audio file, just play it.
-        if station_url[-4:] in direct_play_filetypes:
-            self.log.debug('Playing news from URL: '+station_url)
+        if station_url[-4:] in DIRECT_PLAY_FILETYPES:
+            self.log.debug('Playing news from URL: {}'.format(station_url))
             return station_url
         # Otherwise it is an RSS or XML feed
         data = feedparser.parse(station_url.strip())
@@ -134,7 +136,7 @@ class NewsSkill(CommonPlaySkill):
             else:
                 # fall back to using the first link in the entry
                 media_url = data['entries'][0]['links'][0]['href']
-        self.log.debug('Playing news from URL: ' + media_url)
+        self.log.debug('Playing news from URL: {}'.format(media_url))
         return media_url
 
     @intent_file_handler("PlayTheNews.intent")
