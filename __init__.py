@@ -14,6 +14,7 @@
 
 import feedparser
 import os
+from os.path import join, abspath, dirname
 import subprocess
 import time
 import traceback
@@ -22,27 +23,53 @@ from urllib.parse import quote
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
+from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
+
+def image_path(filename):
+    return 'file://' + join(dirname(abspath(__file__)), 'images', filename)
+
+
 # NOTE: This has to be in sync with the settingsmeta options
 FEEDS = {
-    "other": ("your custom feed", None),
-    "custom": ("your custom feed", None),
-    "ABC": ("ABC News Australia", "https://rss.whooshkaa.com/rss/podcast/id/2381"),
-    "AP":  ("AP Hourly Radio News", "https://www.spreaker.com/show/1401466/episodes/feed"),
-    "BBC": ("BBC News", "https://podcasts.files.bbci.co.uk/p02nq0gn.rss"),
-    "CBC": ("CBC News", "https://www.cbc.ca/podcasting/includes/hourlynews.xml"),
-    "DLF": ("DLF", "https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml"),
-    "Ekot": ("Ekot", "https://api.sr.se/api/rss/pod/3795"),
-    "FOX": ("Fox News", "http://feeds.foxnewsradio.com/FoxNewsRadio"),
-    "NPR": ("NPR News Now", "https://www.npr.org/rss/podcast.php?id=500005"),
-    "PBS": ("PBS NewsHour", "https://www.pbs.org/newshour/feeds/rss/podcasts/show"),
-    "VRT": ("VRT Nieuws", "https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3"),
-    "WDR": ("WDR", "https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast"),
-    "YLE": ("YLE", "https://feeds.yle.fi/areena/v1/series/1-1440981.rss")
+    'other': ('Your custom feed', None, None),
+    'custom': ('Your custom feed', None, None),
+    'ABC': ('ABC News Australia',
+            'https://rss.whooshkaa.com/rss/podcast/id/2381',
+            image_path('ABC.png')),
+    'AP':  ('AP Hourly Radio News',
+            "https://www.spreaker.com/show/1401466/episodes/feed",
+            image_path('AP.png')),
+    'BBC': ('BBC News', 'https://podcasts.files.bbci.co.uk/p02nq0gn.rss',
+            image_path('BBC.png')),
+    'CBC': ('CBC News',
+            'https://www.cbc.ca/podcasting/includes/hourlynews.xml',
+            image_path('CBC.png')),
+    'DLF': ('DLF', 'https://www.deutschlandfunk.de/'
+                   'podcast-nachrichten.1257.de.podcast.xml',
+            image_path('DLF')),
+    'Ekot': ('Ekot', 'https://api.sr.se/api/rss/pod/3795',
+             image_path('Ekot.png')),
+    'FOX': ('Fox News', 'http://feeds.foxnewsradio.com/FoxNewsRadio',
+            image_path('FOX.png')),
+    'NPR': ('NPR News Now', 'https://www.npr.org/rss/podcast.php?id=500005',
+            image_path('NPR.png')),
+    'PBS': ('PBS NewsHour', 'https://www.pbs.org/newshour/feeds/'
+                            'rss/podcasts/show',
+            image_path('PBS.png')),
+    'VRT': ('VRT Nieuws', 'https://progressive-audio.lwc.vrtcdn.be/'
+                          'content/fixed/11_11niws-snip_hi.mp3',
+            None),
+    'WDR': ('WDR', 'https://www1.wdr.de/mediathek/audio/'
+                   'wdr-aktuell-news/wdr-aktuell-152.podcast',
+            image_path('WDR')),
+    'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
+            image_path('Yle.png'))
 }
+
 
 # If feed URL ends in specific filetype, just play it
 DIRECT_PLAY_FILETYPES = ['.mp3']
@@ -106,19 +133,20 @@ class NewsSkill(CommonPlaySkill):
         If neither exist then fallback to default station for country. """
         feed_code = self.settings.get("station", "not_set")
         station_url = self.settings.get("custom_url", "")
-        if FEEDS.get(feed_code) is not None:
-            title, station_url = FEEDS[feed_code]
+        if feed_code in FEEDS:
+            title, station_url, image = FEEDS[feed_code]
         elif len(station_url) > 0:
             title = FEEDS["custom"][0]
+            image = None
         else:
             country_code = self.location['city']['state']['country']['code']
             if self.default_feed.get(country_code) is not None:
                 feed_code = self.default_feed[country_code]
             else:
                 feed_code = "NPR"
-            title, station_url = FEEDS[feed_code]
+            title, station_url, image = FEEDS[feed_code]
 
-        return title, station_url
+        return title, station_url, image
 
     def get_media_url(self, station_url):
         # If link is an audio file, just play it.
@@ -158,9 +186,9 @@ class NewsSkill(CommonPlaySkill):
             rss = None
             self.now_playing = None
             if feed and feed in FEEDS:
-                self.now_playing, rss = FEEDS[feed]
+                self.now_playing, rss, image = FEEDS[feed]
             else:
-                self.now_playing, rss = self.get_station()
+                self.now_playing, rss, image = self.get_station()
             # Speak intro while downloading in background
             self.speak_dialog('news', data={"from": self.now_playing})
 
@@ -178,13 +206,16 @@ class NewsSkill(CommonPlaySkill):
             # Show news title, if there is one
             wait_while_speaking()
             # Begin the news stream
+            self.log.info('Feed: {}'.format(feed))
             self.CPS_play(('file://' + self.STREAM, mime))
+            self.CPS_send_status(image=image or image_path('generic.png'),
+                                 track=self.now_playing)
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
-            self.log.debug("Traceback: {}".format(traceback.format_exc()))
+            self.log.info("Traceback: {}".format(traceback.format_exc()))
             self.speak_dialog("could.not.start.the.news.feed")
 
     @intent_handler(IntentBuilder('').require('Restart'))
@@ -208,7 +239,17 @@ class NewsSkill(CommonPlaySkill):
                 self.log.error('Could not stop curl: {}'.format(repr(e)))
             finally:
                 self.curl = None
+            self.CPS_send_status()
             return True
+
+    def CPS_send_status(self, artist='', track='', image=''):
+        data = {'skill': self.name,
+                'artist': artist,
+                'track': track,
+                'image': image,
+                'status': None  # TODO Add status system
+                }
+        self.bus.emit(Message('play:status', data))
 
 
 def create_skill():
