@@ -203,11 +203,11 @@ class NewsSkill(CommonPlaySkill):
         return title, station_url, image
 
     def get_media_url(self, station_url):
-        # If link is an audio file, just play it.
         if callable(station_url):
             return station_url()
 
-        if station_url[-4:] in DIRECT_PLAY_FILETYPES:
+        # If link is an audio file, just play it.
+        if station_url and station_url[-4:] in DIRECT_PLAY_FILETYPES:
             self.log.debug('Playing news from URL: {}'.format(station_url))
             return station_url
 
@@ -243,10 +243,11 @@ class NewsSkill(CommonPlaySkill):
             self.stop()
             rss = None
             self.now_playing = None
-            if feed and feed in FEEDS:
+            if feed and feed in FEEDS and feed != 'other':
                 self.now_playing, rss, image = FEEDS[feed]
             else:
                 self.now_playing, rss, image = self.get_station()
+
             # Speak intro while downloading in background
             self.speak_dialog('news', data={"from": self.now_playing})
 
