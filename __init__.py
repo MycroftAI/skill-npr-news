@@ -30,6 +30,7 @@ from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
+from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
 
@@ -151,18 +152,22 @@ class NewsSkill(CommonPlaySkill):
 
     def CPS_match_query_phrase(self, phrase):
         # Look for a specific news provider
+        def match_feed_name(phrase, feed_name):
+            return (fuzzy_match(phrase, feed_name) > 0.7 or
+                    fuzzy_match(phrase, feed_name + self.translate("News")) > 0.7)
+
         phrase = ' '.join(phrase.lower().split())
-        news_voc = " news" if self.voc_match(phrase, "News") else ""
+        news_voc = self.translate("News") if self.voc_match(phrase, "News") else ""
 
         # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
-            if source.lower() in phrase:
+            if match_feed_name(phrase, source.lower()):
                 return (source + news_voc, CPSMatchLevel.EXACT,
                         {"feed": source})
         # Check list of alternate names eg 'associated press' => 'AP'
         for name in self.alt_feed_names:
-            if name.lower() in phrase:
-                return (self.alt_feed_names[name] + news_voc,
+            if match_feed_name(phrase, name.lower()):
+                return (self.alt_feed_names[name] + " " + news_voc,
                         CPSMatchLevel.EXACT,
                         {"feed": self.alt_feed_names[name]})
 
