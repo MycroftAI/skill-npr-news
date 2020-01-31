@@ -78,7 +78,14 @@ def gbp():
     return url
 
 
-# NOTE: This has to be in sync with the settingsmeta options
+"""Feed Tuple:
+    Key: Station acronym or short title
+    Tuple: (
+        Long title (String),
+        Feed url (String) or custom function name defined above,
+        image_path - for use on Mycroft GUI
+        )
+    NOTE - this list has to be in sync with the settingsmeta select options"""
 FEEDS = {
     'other': ('Your custom feed', None, None),
     'custom': ('Your custom feed', None, None),
@@ -118,6 +125,8 @@ FEEDS = {
     "RNE": ("National Spanish Radio",
             "http://api.rtve.es/api/programas/36019/audios.rs", None),
     "TSF": ("TSF Radio", tsf, None),
+    "NOS": ("NOS Journaal", "http://news.nixxfm.nl:81/nieuws.mp3",
+            image_path('NOS.png')),
 }
 
 
