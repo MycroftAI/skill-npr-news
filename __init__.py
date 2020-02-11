@@ -170,7 +170,8 @@ class NewsSkill(CommonPlaySkill):
 
         # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
-            if match_feed_name(phrase, source.lower()):
+            if (match_feed_name(phrase, source.lower()) or
+                    match_feed_name(phrase, FEEDS[source][0].lower())):
                 return (source + news_voc, CPSMatchLevel.EXACT,
                         {"feed": source})
         # Check list of alternate names eg 'associated press' => 'AP'
