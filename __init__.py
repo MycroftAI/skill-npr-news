@@ -268,7 +268,7 @@ class NewsSkill(CommonPlaySkill):
             os.mkfifo(self.STREAM)
 
             self.log.debug('Running curl {}'.format(url))
-            args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
+            args = ['curl', '-L', '-s', quote(url, safe=":/"), '-o', self.STREAM]
             self.curl = subprocess.Popen(args)
 
             # Show news title, if there is one
