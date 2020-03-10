@@ -1,19 +1,18 @@
 Feature: mycroft-news
 
-  Scenario Outline: play the news
+  Scenario Outline: what's the news
     Given an english speaking user
     And nothing is playing
-      When the user says "<play the news>"
+      When the user says "<what's the news>"
       Then "mycroft-news" should reply with dialog from "news.dialog"
 
-   Examples: play the news
-     | play the news |
-     | play the news |
+   Examples: what's the news
+     | what's the news |
+     | what's the news |
      | what's new |
      | what's the news |
      | what's the latest news |
      | let's hear the news |
-     | play the latest news |
      | what's this hour's news |
      | give me the news |
      | news |
@@ -29,6 +28,21 @@ Feature: mycroft-news
      | what's today's briefing |
      | what are today's headlines |
      | what's today's headlines |
+     | tell me the news |
+     | tell me today's headlines |
+     | tell me the headlines |
+     | tell me what's happening |
+     | what's happening |
+
+  Scenario Outline: play the news
+    Given an english speaking user
+    And nothing is playing
+      When the user says "<play the news>"
+      Then "skill-playback-control" should reply with dialog from "just.one.moment.dialog"
+
+   Examples: play the news
+     | play the news |
+     | play the latest news |
      | play news briefing |
      | play news |
      | play today's news |
@@ -36,11 +50,6 @@ Feature: mycroft-news
      | play headlines |
      | play today's headlines |
      | play today's news briefing |
-     | tell me the news |
-     | tell me today's headlines |
-     | tell me the headlines |
-     | tell me what's happening |
-     | what's happening |
 
   Scenario Outline: stop news playback
     Given an english speaking user
@@ -85,7 +94,7 @@ Feature: mycroft-news
   Scenario Outline: play a specific news channel
     Given an english speaking user
       When the user says "<play a specific news channel>"
-      Then "mycroft-news" should reply with the dialog "news.dialog"
+      Then "skill-playback-control" should reply with the dialog "just.one.moment.dialog"
 
    Examples: play specific news channel
      | play a specific news channel |
