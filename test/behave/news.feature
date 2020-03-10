@@ -4,7 +4,7 @@ Feature: mycroft-news
     Given an english speaking user
     And nothing is playing
       When the user says "<play the news>"
-      Then "mycroft-news" should reply with "Here is the latest news from NPR News Now."
+      Then "mycroft-news" should reply with dialog from "news.dialog"
 
    Examples: play the news
      | play the news |
@@ -85,8 +85,7 @@ Feature: mycroft-news
   Scenario Outline: play a specific news channel
     Given an english speaking user
       When the user says "<play a specific news channel>"
-      Then "mycroft-common play" should reply with "just a second"
-      And "mycroft-news" should reply with the dialog "news.dialog"
+      Then "mycroft-news" should reply with the dialog "news.dialog"
 
    Examples: play specific news channel
      | play a specific news channel |
