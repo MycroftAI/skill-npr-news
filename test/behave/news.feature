@@ -33,6 +33,10 @@ Feature: mycroft-news
      | tell me the headlines |
      | tell me what's happening |
      | what's happening |
+     | play the latest news |
+     | play today's news |
+     | play today's headlines |
+     | play today's news briefing |
 
   Scenario Outline: play the news
     Given an english speaking user
@@ -42,14 +46,11 @@ Feature: mycroft-news
 
    Examples: play the news
      | play the news |
-     | play the latest news |
+     | play the news |
      | play news briefing |
      | play news |
-     | play today's news |
      | play news briefing |
      | play headlines |
-     | play today's headlines |
-     | play today's news briefing |
 
   Scenario Outline: stop news playback
     Given an english speaking user
