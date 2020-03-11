@@ -42,7 +42,7 @@ Feature: mycroft-news
     Given an english speaking user
     And nothing is playing
       When the user says "<play the news>"
-      Then "skill-playback-control" should reply with dialog from "just.one.moment.dialog"
+      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
 
    Examples: play the news
      | play the news |
@@ -61,7 +61,6 @@ Feature: mycroft-news
    Examples: stop news playback
      | stop the news |
      | stop |
-     | silence |
      | stop playing |
 
   @xfail
@@ -82,6 +81,7 @@ Feature: mycroft-news
      | shut up |
      | be quiet |
      | end playback |
+     | silence |
 
   Scenario Outline: pause news playback
     Given an english speaking user
@@ -95,7 +95,7 @@ Feature: mycroft-news
   Scenario Outline: play a specific news channel
     Given an english speaking user
       When the user says "<play a specific news channel>"
-      Then "skill-playback-control" should reply with the dialog "just.one.moment.dialog"
+      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
 
    Examples: play specific news channel
      | play a specific news channel |
