@@ -17,40 +17,36 @@ import time
 from behave import given, then
 
 from mycroft.messagebus import Message
+from test.integrationtests.voight_kampff import emit_utterance
+
+
+def wait_playback_start(context, timeout=10):
+    cnt = 0
+    while context.bus.get_messages('mycroft.audio.service.play') == []:
+        if cnt > (timeout * (1.0 / 0.5)):
+            return False
+        time.sleep(0.5)
+    return True
 
 
 @given('news is playing')
 def given_news_playing(context):
-    context.bus.emit(Message('recognizer_loop:utterance',
-                             data={'utterances': ['what is the news'],
-                                   'lang': 'en-us',
-                                   'session': '',
-                                   'ident': time.time()},
-                             context={'client_name': 'mycroft_listener'}))
-    time.sleep(10)
+    emit_utterance(context.bus, 'what is the news')
+    wait_playback_start(context)
+    time.sleep(1)
     context.bus.clear_messages()
 
 
 @given('nothing is playing')
 def given_nothing_playing(context):
-    context.bus.emit(Message('recognizer_loop:utterance',
-                             data={'utterances': ['stop playback'],
-                                   'lang': 'en-US',
-                                   'session': '',
-                                   'ident': time.time()},
-                             context={'client_name': 'mycroft_listener'}))
+    context.bus.emit(Message('mycroft.stop'))
     time.sleep(5)
     context.bus.clear_messages()
 
 
 @then('playback should start')
 def then_playback_start(context):
-    cnt = 0
-    while context.bus.get_messages('mycroft.audio.service.play') == []:
-        if cnt > 20:
-            assert False
-            break
-        time.sleep(0.5)
+    assert wait_playback_start is True, 'Playback didn\'t start'
 
 
 @then('"mycroft-news" should stop playing')
