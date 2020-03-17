@@ -64,6 +64,7 @@ Feature: mycroft-news
      | stop playing |
 
   @xfail
+  # Jira MS-108 https://mycroft.atlassian.net/browse/MS-108
   Scenario Outline: Failing stop news playback
     Given an english speaking user
       And news is playing
