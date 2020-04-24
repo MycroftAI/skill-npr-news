@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from datetime import timedelta
+from datetime import date
 import feedparser
 import os
 from os.path import join, abspath, dirname
@@ -22,6 +23,8 @@ import subprocess
 import time
 import traceback
 from urllib.parse import quote
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
 from pytz import timezone
 
 from adapt.intent import IntentBuilder
@@ -77,6 +80,29 @@ def gbp():
     url = mp3_find.group('mp3').decode('utf-8')
     return url
 
+def ft():
+    """Custom news fetcher for today's FT news briefing"""
+    url = 'https://www.ft.com/newsbriefing'
+    page = urlopen(url)
+
+    #init today's date
+    today = date.today()
+    d1 = today.strftime('%A, %d %B, %Y')
+
+    #use bs4 to parse website and get mp3 link
+    soup = BeautifulSoup(page, features='html.parser')
+    result = soup.find('time')
+
+    # check if div matches today's date
+    if result.contents == [d1]:
+        targetDiv = result.parent.find_next('div')
+        targetURL = 'http://www.ft.com' + targetDiv.a['href']
+
+        mp3URL = targetURL
+        mp3Page = urlopen(mp3URL)
+        mp3Soup = BeautifulSoup(mp3Page, features='html.parser')
+
+        return mp3Soup.find('source')['src']
 
 """Feed Tuple:
     Key: Station acronym or short title
