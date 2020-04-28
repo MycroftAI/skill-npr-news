@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import timedelta
-from datetime import date
+from datetime import date, timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
@@ -95,14 +94,14 @@ def ft():
 
     # check if div matches today's date
     if result.contents == [d1]:
-        targetDiv = result.parent.find_next('div')
-        targetURL = 'http://www.ft.com' + targetDiv.a['href']
+        target_div = result.parent.find_next('div')
+        target_url = 'http://www.ft.com' + target_div.a['href']
 
-        mp3URL = targetURL
-        mp3Page = urlopen(mp3URL)
-        mp3Soup = BeautifulSoup(mp3Page, features='html.parser')
+        mp3_url = target_url
+        mp3_page = urlopen(mp3_url)
+        mp3_soup = BeautifulSoup(mp3_page, features='html.parser')
 
-        return mp3Soup.find('source')['src']
+        return mp3_soup.find('source')['src']
 
 """Feed Tuple:
     Key: Station acronym or short title
@@ -154,6 +153,7 @@ FEEDS = {
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
+    "FT": ("Financial Times", ft, None),
 }
 
 
