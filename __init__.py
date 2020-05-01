@@ -82,21 +82,18 @@ def gbp():
     url = mp3_find.group('mp3').decode('utf-8')
     return url
 
+
 def ft():
     """Custom news fetcher for today's FT news briefing"""
     url = 'https://www.ft.com/newsbriefing'
     page = urlopen(url)
 
-    #init today's date
-    today = date.today()
-    d1 = today.strftime('%A, %d %B, %Y')
-
-    #use bs4 to parse website and get mp3 link
+    # Use bs4 to parse website and get mp3 link
     soup = BeautifulSoup(page, features='html.parser')
     result = soup.find('time')
 
-    # check if div matches today's date
-    if result.contents == [d1]:
+    # Check if div matches today's date
+    if datetime.strptime(result.contents[0], '%A, %d %B, %Y').date() == datetime.now().date():
         target_div = result.parent.find_next('div')
         target_url = 'http://www.ft.com' + target_div.a['href']
 
@@ -105,6 +102,7 @@ def ft():
         mp3_soup = BeautifulSoup(mp3_page, features='html.parser')
 
         return mp3_soup.find('source')['src']
+
 
 """Feed Tuple:
     Key: Station acronym or short title
