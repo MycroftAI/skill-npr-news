@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
