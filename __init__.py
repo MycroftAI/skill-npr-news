@@ -161,28 +161,36 @@ class NewsSkill(CommonPlaySkill):
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
     def CPS_match_query_phrase(self, phrase):
+        matched_feed = { 'name': None, 'conf': 0.0 }
         # Look for a specific news provider
-        def match_feed_name(phrase, feed_name):
-            return (fuzzy_match(phrase, feed_name) > 0.7 or
-                    fuzzy_match(phrase, feed_name + self.translate("News")) > 0.7)
-
-        phrase = ' '.join(phrase.lower().split())
-        news_voc = self.translate("News") if self.voc_match(phrase, "News") else ""
+        def match_feed_name(phrase, source, alt_feed=None):
+            nonlocal matched_feed
+            phrase, feed_name = phrase.lower(), source.lower()
+            # Test with News added in case user only says acronym eg "ABC".
+            # As it is short it may not provide a high match confidence.
+            conf = max(fuzzy_match(phrase, feed_name),
+                    fuzzy_match(phrase, feed_name + self.translate("News")))
+            if conf > matched_feed['conf']:
+                matched_feed = { 'name': alt_feed or source, 'conf': conf }
 
         # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
-            if match_feed_name(phrase, source.lower()):
-                return (source + news_voc, CPSMatchLevel.EXACT,
-                        {"feed": source})
+            match_feed_name(phrase, source)
+
         # Check list of alternate names eg 'associated press' => 'AP'
         for name in self.alt_feed_names:
-            if match_feed_name(phrase, name.lower()):
-                return (self.alt_feed_names[name] + " " + news_voc,
-                        CPSMatchLevel.EXACT,
-                        {"feed": self.alt_feed_names[name]})
+            match_feed_name(phrase, name, self.alt_feed_names[name])
+            
+        # If no match but utterance contains news, return low confidence level
+        if matched_feed['conf'] == 0.0 and self.voc_match(phrase, "News"):
+            matched_feed = { 'name': 'news', 'conf': 0.4 }
 
-        if self.voc_match(phrase, "News"):
-            return ("news", CPSMatchLevel.TITLE)
+        title = str(matched_feed['name'])
+        match_level = (CPSMatchLevel.EXACT if matched_feed['conf'] > 0.7 
+                       else CPSMatchLevel.TITLE)
+        feed_data = { "feed": matched_feed['name'] }
+        
+        return (title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
         if data and "feed" in data:
