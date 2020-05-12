@@ -125,8 +125,6 @@ FEEDS = {
     "RNE": ("National Spanish Radio",
             "http://api.rtve.es/api/programas/36019/audios.rs", None),
     "TSF": ("TSF Radio", tsf, None),
-    "NOS": ("NOS Journaal", "http://news.nixxfm.nl:81/nieuws.mp3",
-            image_path('NOS.png')),
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
