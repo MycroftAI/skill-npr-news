@@ -164,22 +164,30 @@ class NewsSkill(CommonPlaySkill):
         matched_feed = { 'name': None, 'conf': 0.0 }
         # Look for a specific news provider
         def match_feed_name(phrase, source, alt_feed=None):
-            nonlocal matched_feed
-            phrase, feed_name = phrase.lower(), source.lower()
+            # Remove the as it matches too well will "other"
+            phrase = phrase.lower().replace('the', '')
+            feed_short_name = source.lower()
             # Test with News added in case user only says acronym eg "ABC".
             # As it is short it may not provide a high match confidence.
-            conf = max(fuzzy_match(phrase, feed_name),
-                    fuzzy_match(phrase, feed_name + self.translate("News")))
-            if conf > matched_feed['conf']:
-                matched_feed = { 'name': alt_feed or source, 'conf': conf }
+            key = alt_feed or source
+            conf = max((fuzzy_match(phrase, feed_short_name),
+                    fuzzy_match(phrase, FEEDS[key][0].lower()),
+                    fuzzy_match(phrase, feed_short_name + self.translate("News"))))
+            return key, conf
 
         # Check primary feed list for matches eg 'ABC'
         for source in FEEDS:
-            match_feed_name(phrase, source)
+            name, conf = match_feed_name(phrase, source)
+            if conf > matched_feed['conf']:
+                matched_feed['conf'] = conf
+                matched_feed['name'] = name
 
         # Check list of alternate names eg 'associated press' => 'AP'
         for name in self.alt_feed_names:
-            match_feed_name(phrase, name, self.alt_feed_names[name])
+            name, conf = match_feed_name(phrase, name, self.alt_feed_names[name])
+            if conf > matched_feed['conf']:
+                matched_feed['conf'] = conf
+                matched_feed['name'] = name
             
         # If no match but utterance contains news, return low confidence level
         if matched_feed['conf'] == 0.0 and self.voc_match(phrase, "News"):
@@ -189,7 +197,7 @@ class NewsSkill(CommonPlaySkill):
         match_level = (CPSMatchLevel.EXACT if matched_feed['conf'] > 0.7 
                        else CPSMatchLevel.TITLE)
         feed_data = { "feed": matched_feed['name'] }
-        
+
         return (title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
