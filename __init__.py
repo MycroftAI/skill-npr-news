@@ -161,28 +161,58 @@ class NewsSkill(CommonPlaySkill):
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
     def CPS_match_query_phrase(self, phrase):
-        # Look for a specific news provider
-        def match_feed_name(phrase, feed_name):
-            return (fuzzy_match(phrase, feed_name) > 0.7 or
-                    fuzzy_match(phrase, feed_name + self.translate("News")) > 0.7)
+        matched_feed = { 'key': None, 'conf': 0.0 }
+        # Remove "the" as it matches too well will "other"
+        search_phrase = phrase.lower().replace('the', '')
 
-        phrase = ' '.join(phrase.lower().split())
-        news_voc = self.translate("News") if self.voc_match(phrase, "News") else ""
+        def match_feed_name(phrase, feed):
+            """ Determine confidence that a phrase requested a given feed.
+
+                    Args:
+                       phrase (str): utterance from the user
+                       feed (str): the station feed to match against
+
+                    Returns:
+                        tuple: feed being matched, confidence level
+            """
+            feed_short_name = feed.lower()
+            short_name_confidence = fuzzy_match(phrase, feed_short_name)
+            long_name_confidence = fuzzy_match(phrase, FEEDS[feed][0].lower())
+            # Test with "News" added in case user only says acronym eg "ABC".
+            # As it is short it may not provide a high match confidence.
+            modified_short_name = "{} {}".format(
+                feed_short_name, self.translate("News"))
+            variation_confidence = fuzzy_match(phrase, modified_short_name)
+
+            conf = max((short_name_confidence, long_name_confidence,
+                        variation_confidence))
+
+            return feed, conf
 
         # Check primary feed list for matches eg 'ABC'
-        for source in FEEDS:
-            if match_feed_name(phrase, source.lower()):
-                return (source + news_voc, CPSMatchLevel.EXACT,
-                        {"feed": source})
+        for feed in FEEDS:
+            feed, conf = match_feed_name(search_phrase, feed)
+            if conf > matched_feed['conf']:
+                matched_feed['conf'] = conf
+                matched_feed['key'] = feed
+
         # Check list of alternate names eg 'associated press' => 'AP'
         for name in self.alt_feed_names:
-            if match_feed_name(phrase, name.lower()):
-                return (self.alt_feed_names[name] + " " + news_voc,
-                        CPSMatchLevel.EXACT,
-                        {"feed": self.alt_feed_names[name]})
+            conf = fuzzy_match(search_phrase, name)
+            if conf > matched_feed['conf']:
+                matched_feed['conf'] = conf
+                matched_feed['key'] = self.alt_feed_names[name]
+            
+        # If no match but utterance contains news, return low confidence level
+        if matched_feed['conf'] == 0.0 and self.voc_match(search_phrase, "News"):
+            matched_feed = { 'key': None, 'conf': 0.4 }
 
-        if self.voc_match(phrase, "News"):
-            return ("news", CPSMatchLevel.TITLE)
+        feed_title = FEEDS[matched_feed['key']][0]
+        match_level = (CPSMatchLevel.EXACT if matched_feed['conf'] > 0.7 
+                       else CPSMatchLevel.TITLE)
+        feed_data = { 'feed': matched_feed['key']}
+
+        return (feed_title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
         if data and "feed" in data:

@@ -97,16 +97,40 @@ Feature: mycroft-news
     Given an english speaking user
       When the user says "<play a specific news channel>"
       Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
+      Then mycroft reply should contain "<specified channel>"
 
    Examples: play specific news channel
-     | play a specific news channel |
-     | play the BBC news |
-     | Play the NPR news |
-     | Play AP hourly news |
-     | Play the news from Associated Press |
-     | Play CBC news |
-     | Play Fox News |
-     | Play PBS news |
-     | Play YLE news |
-     | Play  DLF news |
-     | Play WDR news |
+     | play a specific news channel | specified channel |
+     | play the BBC news | BBC News |
+     | Play the NPR news | NPR News |
+     | Play AP hourly news | AP Hourly Radio News |
+     | Play the news from Associated Press | AP Hourly Radio News |
+     | Play CBC news | CBC News |
+     | Play Fox News | Fox News |
+     | Play PBS news | PBS Newshour |
+     | Play YLE news | YLE |
+     | Play  DLF news | DLF |
+     | Play WDR news | WDR |
+
+  @xfail
+  Scenario Outline: play a specific news channel Failing
+    Given an english speaking user
+      When the user says "<play a specific news channel>"
+      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
+      Then mycroft reply should contain "<specified channel>"
+
+   Examples: play specific news channel
+     | play a specific news channel | specified channel |
+     | play news from bbc | BBC News |
+     | Play news from ekot | Ekot |
+
+  @xfail
+  Scenario Outline: give me the news from channel
+    Given an english speaking user
+      When the user says "<give me news from a specific channel>"
+      Then mycroft reply should contain "<specified channel>"
+
+   Examples:
+     | give me news from a specific channel | specified channel |
+     | give me the news from bbc | BBC News |
+     | give me the news from ekot | Ekot |
