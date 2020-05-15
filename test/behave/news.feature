@@ -112,3 +112,25 @@ Feature: mycroft-news
      | Play  DLF news | DLF |
      | Play WDR news | WDR |
 
+  @xfail
+  Scenario Outline: play a specific news channel Failing
+    Given an english speaking user
+      When the user says "<play a specific news channel>"
+      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
+      Then mycroft reply should contain "<specified channel>"
+
+   Examples: play specific news channel
+     | play a specific news channel | specified channel |
+     | play news from bbc | BBC News |
+     | Play news from ekot | Ekot |
+
+  @xfail
+  Scenario Outline: give me the news from channel
+    Given an english speaking user
+      When the user says "<give me news from a specific channel>"
+      Then mycroft reply should contain "<specified channel>"
+
+   Examples:
+     | give me news from a specific channel | specified channel |
+     | give me the news from bbc | BBC News |
+     | give me the news from ekot | Ekot |
