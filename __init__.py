@@ -162,8 +162,9 @@ class NewsSkill(CommonPlaySkill):
 
     def CPS_match_query_phrase(self, phrase):
         matched_feed = { 'key': None, 'conf': 0.0 }
+
         # Remove "the" as it matches too well will "other"
-        search_phrase = phrase.lower().replace('the', '')
+        search_phrase = phrase.lower().replace('the', '')    
 
         def match_feed_name(phrase, feed):
             """ Determine confidence that a phrase requested a given feed.
@@ -208,10 +209,16 @@ class NewsSkill(CommonPlaySkill):
             matched_feed = { 'key': None, 'conf': 0.4 }
 
         feed_title = FEEDS[matched_feed['key']][0]
-        match_level = (CPSMatchLevel.EXACT if matched_feed['conf'] > 0.7 
-                       else CPSMatchLevel.TITLE)
+        if matched_feed['conf'] > 0.9:
+            match_level = CPSMatchLevel.EXACT  
+        elif matched_feed['conf'] > 0.7:
+            match_level = CPSMatchLevel.ARTIST
+        elif matched_feed['conf'] > 0.5:
+            match_level = CPSMatchLevel.GENERIC
+        else: 
+            match_level = None
         feed_data = { 'feed': matched_feed['key']}
-
+        
         return (feed_title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
