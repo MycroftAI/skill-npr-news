@@ -169,7 +169,10 @@ class NewsSkill(CommonPlaySkill):
         # Catch any short explicit phrases eg "play the news"
         news_phrases = self.translate_list("PlayTheNews") or []
         if search_phrase.strip() in news_phrases:
-            matched_feed = { 'key': 'ABC', 'conf': 1.0 }        
+            station_key = self.settings.get("station", "not_set")
+            if station_key == "not_set":
+                station_key = self.get_default_station()
+            matched_feed = { 'key': station_key, 'conf': 1.0 }        
 
         def match_feed_name(phrase, feed):
             """ Determine confidence that a phrase requested a given feed.
@@ -181,18 +184,18 @@ class NewsSkill(CommonPlaySkill):
                     Returns:
                         tuple: feed being matched, confidence level
             """
+            phrase = phrase.lower().replace("play", "")
             feed_short_name = feed.lower()
             short_name_confidence = fuzzy_match(phrase, feed_short_name)
             long_name_confidence = fuzzy_match(phrase, FEEDS[feed][0].lower())
             # Test with "News" added in case user only says acronym eg "ABC".
             # As it is short it may not provide a high match confidence.
             modified_short_name = "{} {}".format(
-                feed_short_name, self.translate("News"))
+                feed_short_name, self.translate("OnlyNews"))
             variation_confidence = fuzzy_match(phrase, modified_short_name)
 
             conf = max((short_name_confidence, long_name_confidence,
                         variation_confidence))
-
             return feed, conf
 
         # Check primary feed list for matches eg 'ABC'
@@ -211,28 +214,38 @@ class NewsSkill(CommonPlaySkill):
             
         # If no match but utterance contains news, return low confidence level
         if matched_feed['conf'] == 0.0 and self.voc_match(search_phrase, "News"):
-            matched_feed = { 'key': None, 'conf': 0.4 }
+            matched_feed = { 'key': None, 'conf': 0.5 }
 
         feed_title = FEEDS[matched_feed['key']][0]
-        if matched_feed['conf'] > 0.9:
+        if matched_feed['conf'] >= 0.9:
             match_level = CPSMatchLevel.EXACT  
-        elif matched_feed['conf'] > 0.7:
+        elif matched_feed['conf'] >= 0.7:
             match_level = CPSMatchLevel.ARTIST
-        elif matched_feed['conf'] > 0.5:
+        elif matched_feed['conf'] >= 0.5:
+            match_level = CPSMatchLevel.CATEGORY
+        elif matched_feed['conf'] >= 0.3:
             match_level = CPSMatchLevel.GENERIC
         else: 
             match_level = None
         feed_data = { 'feed': matched_feed['key']}
-        
+
         return (feed_title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
-        if data and "feed" in data:
+        if data and data.get("feed"):
             # Play the requested news service
             self.handle_latest_news(feed=data["feed"])
         else:
             # Just use the default news feed
             self.handle_latest_news()
+
+    def get_default_station(self):
+        country_code = self.location['city']['state']['country']['code']
+        if self.default_feed.get(country_code) is not None:
+            feed_code = self.default_feed[country_code]
+        else:
+            feed_code = "NPR"
+        return feed_code
 
     def get_station(self):
         """ Get station to play. Prioritise selected station, then custom url.
@@ -245,11 +258,7 @@ class NewsSkill(CommonPlaySkill):
             title = FEEDS["custom"][0]
             image = None
         else:
-            country_code = self.location['city']['state']['country']['code']
-            if self.default_feed.get(country_code) is not None:
-                feed_code = self.default_feed[country_code]
-            else:
-                feed_code = "NPR"
+            feed_code = self.get_default_station()
             title, station_url, image = FEEDS[feed_code]
 
         return title, station_url, image
