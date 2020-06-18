@@ -164,7 +164,12 @@ class NewsSkill(CommonPlaySkill):
         matched_feed = { 'key': None, 'conf': 0.0 }
 
         # Remove "the" as it matches too well will "other"
-        search_phrase = phrase.lower().replace('the', '')    
+        search_phrase = phrase.lower().replace('the', '')
+        
+        # Catch any short explicit phrases eg "play the news"
+        news_phrases = self.translate_list("PlayTheNews") or []
+        if search_phrase.strip() in news_phrases:
+            matched_feed = { 'key': 'ABC', 'conf': 1.0 }        
 
         def match_feed_name(phrase, feed):
             """ Determine confidence that a phrase requested a given feed.
