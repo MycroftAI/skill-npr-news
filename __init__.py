@@ -190,12 +190,14 @@ class NewsSkill(CommonPlaySkill):
             long_name_confidence = fuzzy_match(phrase, FEEDS[feed][0].lower())
             # Test with "News" added in case user only says acronym eg "ABC".
             # As it is short it may not provide a high match confidence.
-            modified_short_name = "{} {}".format(
-                feed_short_name, self.translate("OnlyNews"))
+            news_keyword = self.translate("OnlyNews").lower()
+            modified_short_name = "{} {}".format(feed_short_name, news_keyword)
             variation_confidence = fuzzy_match(phrase, modified_short_name)
+            key_confidence = 0.6 if news_keyword in phrase and feed_short_name in phrase else 0.0
+
 
             conf = max((short_name_confidence, long_name_confidence,
-                        variation_confidence))
+                        variation_confidence, key_confidence))
             return feed, conf
 
         # Check primary feed list for matches eg 'ABC'
