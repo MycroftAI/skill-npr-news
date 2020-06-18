@@ -306,6 +306,12 @@ class NewsSkill(CommonPlaySkill):
             self.stop()
             rss = None
             self.now_playing = None
+            # Basic check for station title in utterance
+            # TODO - expand this - probably abstract from CPS Matching
+            if message and not feed:
+                for f in FEEDS:
+                    if f.lower() in message.data["utterance"].lower():
+                        feed = f
             if feed and feed in FEEDS and feed != 'other':
                 self.now_playing, rss, image = FEEDS[feed]
             else:

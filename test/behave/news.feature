@@ -124,6 +124,9 @@ Feature: mycroft-news
      | give me news from a specific channel | specified channel |
      | give me the news from bbc | BBC News |
      | give me the news from ekot | Ekot |
+     | tell me the latest NPR news | NPR |
+     | what are the latest headlines from Fox | Fox |
+     | what are the headlines from WDR | WDR |
 
   Scenario Outline: play music with names similar to news channels
     Given an english speaking user
