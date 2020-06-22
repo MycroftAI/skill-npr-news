@@ -17,22 +17,31 @@ import time
 from behave import given, then
 
 from mycroft.messagebus import Message
-from test.integrationtests.voight_kampff import emit_utterance
+from test.integrationtests.voight_kampff import emit_utterance, mycroft_responses, then_wait
 
 
-def wait_playback_start(context, timeout=10):
-    cnt = 0
-    while context.bus.get_messages('mycroft.audio.service.play') == []:
-        if cnt > (timeout * (1.0 / 0.5)):
-            return False
-        time.sleep(0.5)
-    return True
+def wait_for_service_message(context, message_type):
+    """Common method for detecting audio play, stop, or pause messages"""
+    msg_type = 'mycroft.audio.service.{}'.format(message_type)
+    def check_for_msg(message):
+        return (message.msg_type == msg_type, '')
+
+    passed, debug = then_wait(msg_type, check_for_msg, context)
+
+    if not passed:
+        debug += mycroft_responses(context)
+    if not debug:
+        if message_type == 'play':
+            message_type = 'start'
+        debug = "Mycroft didn't {} playback".format(message_type)
+
+    assert passed, debug
 
 
 @given('news is playing')
 def given_news_playing(context):
     emit_utterance(context.bus, 'what is the news')
-    wait_playback_start(context)
+    wait_for_service_message(context, 'play')
     time.sleep(1)
     context.bus.clear_messages()
 
@@ -46,28 +55,14 @@ def given_nothing_playing(context):
 
 @then('playback should start')
 def then_playback_start(context):
-    assert wait_playback_start is True, 'Playback didn\'t start'
+    wait_for_service_message(context, 'start')
 
 
 @then('"mycroft-news" should stop playing')
 def then_playback_stop(context):
-    cnt = 0
-    while context.bus.get_messages('mycroft.audio.service.stop') == []:
-        if cnt > 20:
-            assert False, "No stop message received"
-            break
-        else:
-            cnt += 1
-        time.sleep(0.5)
+    wait_for_service_message(context, 'stop')
 
 
 @then('"mycroft-news" should pause playing')
 def then_playback_pause(context):
-    cnt = 0
-    while context.bus.get_messages('mycroft.audio.service.pause') == []:
-        if cnt > 20:
-            assert False, "No stop message received"
-            break
-        else:
-            cnt += 1
-        time.sleep(0.5)
+    wait_for_service_message(context, 'pause')
