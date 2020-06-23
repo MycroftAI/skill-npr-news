@@ -6,7 +6,7 @@ Feature: mycroft-news
       When the user says "<what's the news>"
       Then "mycroft-news" should reply with dialog from "news.dialog"
 
-   Examples: what's the news
+   Examples: What's the news - standard intent
      | what's the news |
      | what's the news |
      | what's new |
@@ -33,16 +33,12 @@ Feature: mycroft-news
      | tell me the headlines |
      | tell me what's happening |
      | what's happening |
-     | play the latest news |
-     | play today's news |
-     | play today's headlines |
-     | play today's news briefing |
 
-  Scenario Outline: play the news
+  Scenario Outline: Play the news using Common Play Framework
     Given an english speaking user
     And nothing is playing
       When the user says "<play the news>"
-      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
+      Then "mycroft-playback-control" should reply with dialog from "news.dialog"
 
    Examples: play the news
      | play the news |
@@ -51,6 +47,10 @@ Feature: mycroft-news
      | play news |
      | play news briefing |
      | play headlines |
+     | play the latest news |
+     | play today's news |
+     | play today's headlines |
+     | play today's news briefing |
 
   Scenario Outline: stop news playback
     Given an english speaking user
@@ -111,16 +111,6 @@ Feature: mycroft-news
      | Play YLE news | YLE |
      | Play  DLF news | DLF |
      | Play WDR news | WDR |
-
-  @xfail
-  Scenario Outline: play a specific news channel Failing
-    Given an english speaking user
-      When the user says "<play a specific news channel>"
-      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
-      Then mycroft reply should contain "<specified channel>"
-
-   Examples: play specific news channel
-     | play a specific news channel | specified channel |
      | play news from bbc | BBC News |
      | Play news from ekot | Ekot |
 
@@ -134,3 +124,26 @@ Feature: mycroft-news
      | give me news from a specific channel | specified channel |
      | give me the news from bbc | BBC News |
      | give me the news from ekot | Ekot |
+     | tell me the latest NPR news | NPR |
+     | what are the latest headlines from Fox | Fox |
+     | what are the headlines from WDR | WDR |
+
+  Scenario Outline: play music with names similar to news channels
+    Given an english speaking user
+     When the user says "<play some music>"
+     Then "NewsSkill" should not reply
+
+    Examples:
+      | play some music |
+      | what time is it |
+      | what's the weather |
+      | cancel timer |
+      | play metallica |
+      | play 1live on tunein |
+      | play sunshine on tunein |
+      | play bigfm on tunein |
+      | Play klassik lounge easy radio |
+      | play the song monkey brains |
+      | play the song skinamarinky dinky dink |
+      | play the song python programming |
+      | play the song covid-19 |
