@@ -131,7 +131,7 @@ Feature: mycroft-news
   Scenario Outline: play music with names similar to news channels
     Given an english speaking user
      When the user says "<play some music>"
-     Then "NewsSkill" should not reply
+     Then "NewsSkill" should not respond
 
     Examples:
       | play some music |
