@@ -225,10 +225,9 @@ class NewsSkill(CommonPlaySkill):
             match_level = CPSMatchLevel.ARTIST
         elif matched_feed['conf'] >= 0.5:
             match_level = CPSMatchLevel.CATEGORY
-        elif matched_feed['conf'] >= 0.3:
-            match_level = CPSMatchLevel.GENERIC
         else: 
             match_level = None
+            return match_level
         feed_data = { 'feed': matched_feed['key']}
 
         return (feed_title, match_level, feed_data)

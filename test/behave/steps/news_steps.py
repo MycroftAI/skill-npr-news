@@ -84,8 +84,10 @@ def then_wait_fail(msg_type, criteria_func, context, timeout=10):
     status, debug = then_wait(msg_type, criteria_func, context, timeout)
     return (not status, debug)
 
-@then('"{skill}" should not reply')
-def then_do_not_reply(context, skill):
+# NOTE: language here has been changed to avoid conflict with soon to be merged VK Step.
+# When this code is removed, change this back to "Skill should not reply"
+@then('"{skill}" should not respond')
+def then_do_not_respond(context, skill):
 
     def check_all_dialog(message):
         msg_skill = message.data.get('meta').get('skill')
