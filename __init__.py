@@ -92,8 +92,13 @@ def ft():
     soup = BeautifulSoup(page, features='html.parser')
     result = soup.find('time')
 
+    # Get today and yesterday's date to match div and play most recent news
+    today = datetime.date.today()
+    yesterday = today - timedelta(1)
+    div_date = datetime.strptime(result.contents[0], '%A, %d %B, %Y').date()
+
     # Check if div matches today's date
-    if datetime.strptime(result.contents[0], '%A, %d %B, %Y').date() == datetime.now().date():
+    if div_date in (today,yesterday):
         target_div = result.parent.find_next('div')
         target_url = 'http://www.ft.com' + target_div.a['href']
 
