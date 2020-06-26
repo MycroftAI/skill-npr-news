@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
@@ -90,7 +90,7 @@ def ft():
     result = soup.find('time')
 
     # Get today and yesterday's date to match div and play most recent news
-    today = datetime.date.today()
+    today = date.today()
     yesterday = today - timedelta(1)
     div_date = datetime.strptime(result.contents[0], '%A, %d %B, %Y').date()
 
