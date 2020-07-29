@@ -109,7 +109,9 @@ Feature: mycroft-news
      | Play Fox News | Fox News |
      | Play PBS news | PBS Newshour |
      | Play YLE news | YLE |
+     | Play  ABC news | ABC |
      | Play  DLF news | DLF |
+     | Play  TSF news | TSF |
      | Play WDR news | WDR |
      | play news from bbc | BBC News |
      | Play news from ekot | Ekot |

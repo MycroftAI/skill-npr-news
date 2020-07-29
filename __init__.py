@@ -16,7 +16,6 @@ from datetime import timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
-import re
 import requests
 import subprocess
 import time
@@ -33,65 +32,27 @@ from mycroft.util import get_cache_directory
 from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
-from .stations.abc import abc
+# Import locally defined fetchers for stations
+from . import stations
 
 
 def image_path(filename):
     return 'file://' + join(dirname(abspath(__file__)), 'images', filename)
 
 
-def tsf():
-    """Custom inews fetcher for TSF news."""
-    feed = ('https://www.tsf.pt/stream/audio/{year}/{month:02d}/'
-            'noticias/{day:02d}/not{hour:02d}.mp3')
-    uri = None
-    i = 0
-    status = 404
-    date = now_local(timezone('Portugal'))
-    while status != 200 and i < 5:
-        date -= timedelta(hours=i)
-        uri = feed.format(hour=date.hour, year=date.year,
-                          month=date.month, day=date.day)
-        status = requests.get(uri).status_code
-        i += 1
-    if status != 200:
-        return None
-    return uri
-
-
-def gbp():
-    """Custom news fetcher for GBP news."""
-    feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
-    data = feedparser.parse(feed)
-    next_link = None
-    for entry in data['entries']:
-        # Find the first mp3 link with "GPB {time} Headlines" in title
-        if 'GPB' in entry['title'] and 'Headlines' in entry['title']:
-            next_link = entry['links'][0]['href']
-            break
-    html = requests.get(next_link)
-    # Find the first mp3 link
-    # Note that the latest mp3 may not be news,
-    # but could be an interview, etc.
-    mp3_find = re.search(r'href="(?P<mp3>.+\.mp3)"'.encode(), html.content)
-    if mp3_find is None:
-        return None
-    url = mp3_find.group('mp3').decode('utf-8')
-    return url
-
-
 """Feed Tuple:
     Key: Station acronym or short title
     Tuple: (
         Long title (String),
-        Feed url (String) or custom function name defined above,
+        Feed url (String or function) - custom functions to be placed in
+                                        stations directory.
         image_path - for use on Mycroft GUI
         )
     NOTE - this list has to be in sync with the settingsmeta select options"""
 FEEDS = {
     'other': ('Your custom feed', None, None),
     'custom': ('Your custom feed', None, None),
-    'ABC': ('ABC News Australia', abc, image_path('ABC.png')),
+    'ABC': ('ABC News Australia', stations.abc.get_url, image_path('ABC.png')),
     'AP':  ('AP Hourly Radio News',
             "https://www.spreaker.com/show/1401466/episodes/feed",
             image_path('AP.png')),
@@ -120,11 +81,11 @@ FEEDS = {
             image_path('WDR')),
     'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
             image_path('Yle.png')),
-    "GBP": ("Georgia Public Radio", gbp, None),
+    "GBP": ("Georgia Public Radio", stations.gbp.get_url, None),
     "RDP": ("RDP Africa", "http://www.rtp.pt//play/itunes/5442", None),
     "RNE": ("National Spanish Radio",
             "http://api.rtve.es/api/programas/36019/audios.rs", None),
-    "TSF": ("TSF Radio", tsf, None),
+    "TSF": ("TSF Radio", stations.tsf.get_uri, None),
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
