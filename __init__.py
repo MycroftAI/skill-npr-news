@@ -33,6 +33,8 @@ from mycroft.util import get_cache_directory
 from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
+from .stations.abc import abc
+
 
 def image_path(filename):
     return 'file://' + join(dirname(abspath(__file__)), 'images', filename)
@@ -89,9 +91,7 @@ def gbp():
 FEEDS = {
     'other': ('Your custom feed', None, None),
     'custom': ('Your custom feed', None, None),
-    'ABC': ('ABC News Australia',
-            'https://rss.whooshkaa.com/rss/podcast/id/2381',
-            image_path('ABC.png')),
+    'ABC': ('ABC News Australia', abc, image_path('ABC.png')),
     'AP':  ('AP Hourly Radio News',
             "https://www.spreaker.com/show/1401466/episodes/feed",
             image_path('AP.png')),
