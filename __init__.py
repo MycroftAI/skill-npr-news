@@ -18,6 +18,7 @@ import os
 from os.path import join, abspath, dirname
 import re
 import requests
+from shutil import copyfile
 import subprocess
 import time
 import traceback
@@ -29,7 +30,7 @@ from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-from mycroft.util import get_cache_directory
+from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
@@ -141,6 +142,22 @@ def find_mime(url):
     if 200 <= response.status_code < 300:
         mime = response.headers['content-type']
     return mime
+
+
+def contains_html(file):
+    found_html = False
+    tmp_file = '/tmp/mycroft-news-html-check'
+    try:
+        # Copy file to prevent locking larger file being downloaded
+        copyfile(file, tmp_file)
+        with open(tmp_file, mode='r', encoding="utf-8") as f:
+            for line in f:
+                if '<html>' in line:
+                    found_html = True
+                    break
+    except Exception:
+        LOG.debug('Could not parse file, assumed not to be HTML.')
+    return found_html
 
 
 class NewsSkill(CommonPlaySkill):
@@ -332,6 +349,10 @@ class NewsSkill(CommonPlaySkill):
             self.log.debug('Running curl {}'.format(url))
             args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
             self.curl = subprocess.Popen(args)
+
+            # Check if downloaded file is actually an error page
+            if contains_html(self.STREAM):
+                raise Exception('Could not fetch valid audio file.')
 
             # Show news title, if there is one
             wait_while_speaking()
