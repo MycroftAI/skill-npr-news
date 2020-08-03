@@ -285,6 +285,9 @@ class NewsSkill(CommonPlaySkill):
                 # fall back to using the first link in the entry
                 media_url = data['entries'][0]['links'][0]['href']
         self.log.debug('Playing news from URL: {}'.format(media_url))
+        # TODO - check on temporary workaround and remove - see issue #87
+        if station_url.startswith('https://www.npr.org/'):
+            media_url = media_url.split('?')[0]
         return media_url
 
     @intent_file_handler("PlayTheNews.intent")
