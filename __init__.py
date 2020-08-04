@@ -151,11 +151,11 @@ def contains_html(file):
     progress. This should not be considered a robust method of testing if a 
     file is a HTML document, but sufficient for this purpose.
 
-        Args:
-            file (str): path of file
+    Args:
+        file (str): path of file
 
-        Returns:
-            bool: whether a <html> tag was found
+    Returns:
+        bool: whether a <html> tag was found
     """
     found_html = False
     tmp_file = '/tmp/mycroft-news-html-check'
@@ -204,14 +204,14 @@ class NewsSkill(CommonPlaySkill):
             matched_feed = { 'key': station_key, 'conf': 1.0 }        
 
         def match_feed_name(phrase, feed):
-            """ Determine confidence that a phrase requested a given feed.
+            """Determine confidence that a phrase requested a given feed.
 
-                    Args:
-                       phrase (str): utterance from the user
-                       feed (str): the station feed to match against
+            Args:
+                phrase (str): utterance from the user
+                feed (str): the station feed to match against
 
-                    Returns:
-                        tuple: feed being matched, confidence level
+            Returns:
+                tuple: feed being matched, confidence level
             """
             phrase = phrase.lower().replace("play", "")
             feed_short_name = feed.lower()
@@ -278,8 +278,13 @@ class NewsSkill(CommonPlaySkill):
         return feed_code
 
     def get_station(self):
-        """ Get station to play. Prioritise selected station, then custom url.
-        If neither exist then fallback to default station for country. """
+        """Get station user selected from settings or default station. 
+        
+        Fallback order:
+        1. User selected station
+        2. User defined custom url
+        3. Default station for country
+        """
         feed_code = self.settings.get("station", "not_set")
         station_url = self.settings.get("custom_url", "")
         if feed_code in FEEDS:
