@@ -18,6 +18,7 @@ import os
 from os.path import join, abspath, dirname
 import re
 import requests
+from shutil import copyfile
 import subprocess
 import time
 import traceback
@@ -29,7 +30,7 @@ from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-from mycroft.util import get_cache_directory
+from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
@@ -143,6 +144,34 @@ def find_mime(url):
     return mime
 
 
+def contains_html(file):
+    """Reads file and reports if a <html> tag is contained.
+
+    Makes a temporary copy of the file to prevent locking downloads in 
+    progress. This should not be considered a robust method of testing if a 
+    file is a HTML document, but sufficient for this purpose.
+
+    Args:
+        file (str): path of file
+
+    Returns:
+        bool: whether a <html> tag was found
+    """
+    found_html = False
+    tmp_file = '/tmp/mycroft-news-html-check'
+    try:
+        # Copy file to prevent locking larger file being downloaded
+        copyfile(file, tmp_file)
+        with open(tmp_file, mode='r', encoding="utf-8") as f:
+            for line in f:
+                if '<html>' in line:
+                    found_html = True
+                    break
+    except Exception:
+        LOG.debug('Could not parse file, assumed not to be HTML.')
+    return found_html
+
+
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
@@ -175,14 +204,14 @@ class NewsSkill(CommonPlaySkill):
             matched_feed = { 'key': station_key, 'conf': 1.0 }        
 
         def match_feed_name(phrase, feed):
-            """ Determine confidence that a phrase requested a given feed.
+            """Determine confidence that a phrase requested a given feed.
 
-                    Args:
-                       phrase (str): utterance from the user
-                       feed (str): the station feed to match against
+            Args:
+                phrase (str): utterance from the user
+                feed (str): the station feed to match against
 
-                    Returns:
-                        tuple: feed being matched, confidence level
+            Returns:
+                tuple: feed being matched, confidence level
             """
             phrase = phrase.lower().replace("play", "")
             feed_short_name = feed.lower()
@@ -249,8 +278,13 @@ class NewsSkill(CommonPlaySkill):
         return feed_code
 
     def get_station(self):
-        """ Get station to play. Prioritise selected station, then custom url.
-        If neither exist then fallback to default station for country. """
+        """Get station user selected from settings or default station. 
+        
+        Fallback order:
+        1. User selected station
+        2. User defined custom url
+        3. Default station for country
+        """
         feed_code = self.settings.get("station", "not_set")
         station_url = self.settings.get("custom_url", "")
         if feed_code in FEEDS:
@@ -285,6 +319,9 @@ class NewsSkill(CommonPlaySkill):
                 # fall back to using the first link in the entry
                 media_url = data['entries'][0]['links'][0]['href']
         self.log.debug('Playing news from URL: {}'.format(media_url))
+        # TODO - check on temporary workaround and remove - see issue #87
+        if station_url.startswith('https://www.npr.org/'):
+            media_url = media_url.split('?')[0]
         return media_url
 
     @intent_file_handler("PlayTheNews.intent")
@@ -329,6 +366,10 @@ class NewsSkill(CommonPlaySkill):
             self.log.debug('Running curl {}'.format(url))
             args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
             self.curl = subprocess.Popen(args)
+
+            # Check if downloaded file is actually an error page
+            if contains_html(self.STREAM):
+                raise Exception('Could not fetch valid audio file.')
 
             # Show news title, if there is one
             wait_while_speaking()
