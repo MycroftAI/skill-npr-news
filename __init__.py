@@ -145,6 +145,18 @@ def find_mime(url):
 
 
 def contains_html(file):
+    """Reads file and reports if a <html> tag is contained.
+
+    Makes a temporary copy of the file to prevent locking downloads in 
+    progress. This should not be considered a robust method of testing if a 
+    file is a HTML document, but sufficient for this purpose.
+
+        Args:
+            file (str): path of file
+
+        Returns:
+            bool: whether a <html> tag was found
+    """
     found_html = False
     tmp_file = '/tmp/mycroft-news-html-check'
     try:
