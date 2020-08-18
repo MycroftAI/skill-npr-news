@@ -255,6 +255,12 @@ class NewsSkill(CommonPlaySkill):
 
         if matched_feed['conf'] > 0:
             feed_title = FEEDS[matched_feed['key']][0]
+
+            if media_type == CPSMatchType.NEWS:
+                matched_feed['conf'] += 0.1  # bonus
+                if matched_feed['conf'] > 1.0:
+                    matched_feed['conf'] = 1.0
+
             if matched_feed['conf'] >= 0.9:
                 match_level = CPSMatchLevel.EXACT
             elif matched_feed['conf'] >= 0.7:
@@ -267,7 +273,8 @@ class NewsSkill(CommonPlaySkill):
         else:
             match_level = None
             return match_level
-        feed_data = { 'feed': matched_feed['key']}
+        feed_data = { 'feed': matched_feed['key'],
+                      "conf": matched_feed["conf"]}
 
         return (feed_title, match_level, feed_data)
 
