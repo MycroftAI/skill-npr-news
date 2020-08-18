@@ -253,6 +253,10 @@ class NewsSkill(CommonPlaySkill):
         if matched_feed['conf'] == 0.0 and self.voc_match(search_phrase, "News"):
             matched_feed = { 'key': default_station, 'conf': 0.5 }
 
+        if media_type != CPSMatchType.NEWS:
+            # penalize so other skills have priority
+            matched_feed['conf'] = matched_feed['conf'] - 0.2
+
         if matched_feed['conf'] > 0:
             feed_title = FEEDS[matched_feed['key']][0]
 
