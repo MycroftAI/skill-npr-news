@@ -29,7 +29,7 @@ from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
-from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel, CPSMatchType
 from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
@@ -179,6 +179,7 @@ class NewsSkill(CommonPlaySkill):
         self.now_playing = None
         self.last_message = None
         self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
+        self.supported_media = [CPSMatchType.NEWS, CPSMatchType.GENERIC]
 
     def initialize(self):
         time.sleep(1)
@@ -189,8 +190,13 @@ class NewsSkill(CommonPlaySkill):
         # Longer titles or alternative common names of feeds for searching
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
-    def CPS_match_query_phrase(self, phrase):
-        matched_feed = { 'key': None, 'conf': 0.0 }
+    def CPS_match_query_phrase(self, phrase, media_type):
+        matched_feed = {'key': None, 'conf': 0.0}
+        default_station = self.get_default_station()
+
+        if media_type == CPSMatchType.NEWS:
+            # handles "play the news"
+            matched_feed = {'key': default_station, 'conf': 0.7}
 
         # Remove "the" as it matches too well will "other"
         search_phrase = phrase.lower().replace('the', '')
@@ -200,7 +206,7 @@ class NewsSkill(CommonPlaySkill):
         if search_phrase.strip() in news_phrases:
             station_key = self.settings.get("station", "not_set")
             if station_key == "not_set":
-                station_key = self.get_default_station()
+                station_key = default_station
             matched_feed = { 'key': station_key, 'conf': 1.0 }        
 
         def match_feed_name(phrase, feed):
@@ -245,16 +251,20 @@ class NewsSkill(CommonPlaySkill):
             
         # If no match but utterance contains news, return low confidence level
         if matched_feed['conf'] == 0.0 and self.voc_match(search_phrase, "News"):
-            matched_feed = { 'key': None, 'conf': 0.5 }
+            matched_feed = { 'key': default_station, 'conf': 0.5 }
 
-        feed_title = FEEDS[matched_feed['key']][0]
-        if matched_feed['conf'] >= 0.9:
-            match_level = CPSMatchLevel.EXACT  
-        elif matched_feed['conf'] >= 0.7:
-            match_level = CPSMatchLevel.ARTIST
-        elif matched_feed['conf'] >= 0.5:
-            match_level = CPSMatchLevel.CATEGORY
-        else: 
+        if matched_feed['conf'] > 0:
+            feed_title = FEEDS[matched_feed['key']][0]
+            if matched_feed['conf'] >= 0.9:
+                match_level = CPSMatchLevel.EXACT
+            elif matched_feed['conf'] >= 0.7:
+                match_level = CPSMatchLevel.ARTIST
+            elif matched_feed['conf'] >= 0.5:
+                match_level = CPSMatchLevel.CATEGORY
+            else:
+                match_level = None
+                return match_level
+        else:
             match_level = None
             return match_level
         feed_data = { 'feed': matched_feed['key']}
@@ -409,15 +419,6 @@ class NewsSkill(CommonPlaySkill):
                 self.curl = None
             self.CPS_send_status()
             return True
-
-    def CPS_send_status(self, artist='', track='', image=''):
-        data = {'skill': self.name,
-                'artist': artist,
-                'track': track,
-                'image': image,
-                'status': None  # TODO Add status system
-                }
-        self.bus.emit(Message('play:status', data))
 
 
 def create_skill():
