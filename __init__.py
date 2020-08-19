@@ -349,7 +349,7 @@ class NewsSkill(CommonPlaySkill):
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
         utt = message.data["utterance"]
-        match = self.CPS_match_query_phrase(utt)
+        match = self.CPS_match_query_phrase(utt, CPSMatchType.NEWS)
         if match and len(match) > 2:
             feed = match[2]["feed"]
         else:
