@@ -410,18 +410,6 @@ class NewsSkill(CommonPlaySkill):
             self.CPS_send_status()
             return True
 
-    def CPS_send_status(self, artist='', track='', image='',
-                        uri='', status=None, **kwargs):
-        """TODO remove in 20.08."""
-        data = {'skill': self.name,
-                'artist': artist,
-                'track': track,
-                'image': image,
-                'status': status,
-                'uri': uri
-                }
-        self.bus.emit(Message('play:status', data))
-
 
 def create_skill():
     return NewsSkill()
