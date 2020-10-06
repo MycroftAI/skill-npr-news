@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
@@ -23,6 +23,8 @@ import subprocess
 import time
 import traceback
 from urllib.parse import quote
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
 from pytz import timezone
 
 from adapt.intent import IntentBuilder
@@ -81,6 +83,32 @@ def gbp():
     return url
 
 
+def ft():
+    """Custom news fetcher for today's FT news briefing"""
+    url = 'https://www.ft.com/newsbriefing'
+    page = urlopen(url)
+
+    # Use bs4 to parse website and get mp3 link
+    soup = BeautifulSoup(page, features='html.parser')
+    result = soup.find('time')
+
+    # Get today and yesterday's date to match div and play most recent news
+    today = date.today()
+    yesterday = today - timedelta(1)
+    div_date = datetime.strptime(result.contents[0], '%A, %d %B, %Y').date()
+
+    # Check if div matches today's date
+    if div_date in (today,yesterday):
+        target_div = result.parent.find_next('div')
+        target_url = 'http://www.ft.com' + target_div.a['href']
+
+        mp3_url = target_url
+        mp3_page = urlopen(mp3_url)
+        mp3_soup = BeautifulSoup(mp3_page, features='html.parser')
+
+        return mp3_soup.find('source')['src']
+
+
 """Feed Tuple:
     Key: Station acronym or short title
     Tuple: (
@@ -129,6 +157,7 @@ FEEDS = {
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
+    "FT": ("Financial Times", ft, None),
 }
 
 
