@@ -119,6 +119,8 @@ FEEDS = {
     'WDR': ('WDR', 'https://www1.wdr.de/mediathek/audio/'
                    'wdr-aktuell-news/wdr-aktuell-152.podcast',
             image_path('WDR')),
+    'hr-iNFO': ('hr-iNFO', 'https://podcast.hr-online.de/der_tag_in_hessen/podcast.xml',
+            None),
     'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
             image_path('Yle.png')),
     "GBP": ("Georgia Public Radio", gbp, None),
