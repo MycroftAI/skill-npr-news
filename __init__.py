@@ -28,7 +28,7 @@ from pytz import timezone
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
-from mycroft.skills.core import intent_handler, intent_file_handler
+from mycroft.skills.core import MycroftSkill, intent_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
@@ -326,7 +326,7 @@ class NewsSkill(CommonPlaySkill):
             media_url = media_url.split('?')[0]
         return media_url
 
-    @intent_file_handler("PlayTheNews.intent")
+    @intent_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
         utt = message.data["utterance"]
