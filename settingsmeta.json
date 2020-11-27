@@ -12,7 +12,7 @@
                         "name": "station",
                         "type": "select",
                         "label": "Options",
-                        "options": "Other URL (please define below)|not_set;AP Hourly Radio News|AP;[AU] ABC News|ABC;[CA] CBC|CBC;[BE] VRT Nieuws|VRT;[DE] DLF|DLF;[DE] WDR|WDR;[ES] RNE National Spanish Radio|RNE;[FI] YLE|YLE;[NL] NOS Journaal|NOS;[PT] RDP Africa|RDP;[PT] TSF|TSF;[SE] Ekot|Ekot;[UK] BBC News|BBC;[US] FOX News|FOX;[US] Georgia Public Radio|GPB;[US] NPR|NPR;[US] PBS NewsHour Daily|PBS",
+                        "options": "Other URL (please define below)|not_set;AP Hourly Radio News|AP;[AU] ABC News|ABC;[CA] CBC|CBC;[BE] VRT Nieuws|VRT;[DE] DLF|DLF;[DE] WDR|WDR;[ES] RNE National Spanish Radio|RNE;[FI] YLE|YLE;[NL] NOS Journaal|NOS;[PT] RDP Africa|RDP;[PT] TSF|TSF;[SE] Ekot|Ekot;[UK] BBC News|BBC;[US] FOX News|FOX;[US] Georgia Public Radio|GPB;[US] NPR|NPR;[US] PBS NewsHour Daily|PBS;[ES] Catalunya Informació|CCMA",
                         "value": "not_set"
                     },
                     {

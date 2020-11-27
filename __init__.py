@@ -129,6 +129,9 @@ FEEDS = {
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
+    "CCMA": ("Catalunya Informació",
+             "https://de1.api.radio-browser.info/pls/url/69bc7084-523c-11ea-be63-52543be04c81",
+             image_path('CCMA.png'))
 }
 
 
@@ -307,17 +310,27 @@ class NewsSkill(CommonPlaySkill):
             self.log.debug('Playing news from URL: {}'.format(station_url))
             return station_url
 
-        # Otherwise it is an RSS or XML feed
-        data = feedparser.parse(station_url.strip())
-        # After the intro, find and start the news stream
-        # select the first link to an audio file
-        for link in data['entries'][0]['links']:
-            if 'audio' in link['type']:
-                media_url = link['href']
-                break
+        try:
+            # TODO invalid assumption!!
+            # a direct stream does not need to end with .mp3
+
+            # Otherwise it is an RSS or XML feed
+            data = feedparser.parse(station_url.strip())
+            # After the intro, find and start the news stream
+            # select the first link to an audio file
+            for link in data['entries'][0]['links']:
+                if 'audio' in link['type']:
+                    media_url = link['href']
+                    break
+                else:
+                    # fall back to using the first link in the entry
+                    media_url = data['entries'][0]['links'][0]['href']
+        except Exception as e:
+            if station_url.startswith("http"):
+                # just try to play it
+                media_url = station_url
             else:
-                # fall back to using the first link in the entry
-                media_url = data['entries'][0]['links'][0]['href']
+                raise e
         self.log.debug('Playing news from URL: {}'.format(media_url))
         # TODO - check on temporary workaround and remove - see issue #87
         if station_url.startswith('https://www.npr.org/'):
