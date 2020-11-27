@@ -177,6 +177,8 @@ def contains_html(file):
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
+        if "use_curl" not in self.settings:
+            self.settings["use_curl"] = True
         self.curl = None
         self.now_playing = None
         self.last_message = None
@@ -377,24 +379,28 @@ class NewsSkill(CommonPlaySkill):
 
             url = self.get_media_url(rss)
             mime = find_mime(url)
-            # (Re)create Fifo
-            if os.path.exists(self.STREAM):
-                os.remove(self.STREAM)
-            os.mkfifo(self.STREAM)
+            if self.settings["use_curl"]:
+                # (Re)create Fifo
+                if os.path.exists(self.STREAM):
+                    os.remove(self.STREAM)
+                os.mkfifo(self.STREAM)
 
-            self.log.debug('Running curl {}'.format(url))
-            args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
-            self.curl = subprocess.Popen(args)
+                self.log.debug('Running curl {}'.format(url))
+                args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
+                self.curl = subprocess.Popen(args)
 
-            # Check if downloaded file is actually an error page
-            if contains_html(self.STREAM):
-                raise Exception('Could not fetch valid audio file.')
+                # Check if downloaded file is actually an error page
+                if contains_html(self.STREAM):
+                    raise Exception('Could not fetch valid audio file.')
 
             # Show news title, if there is one
             wait_while_speaking()
             # Begin the news stream
             self.log.info('Feed: {}'.format(feed))
-            self.CPS_play(('file://' + self.STREAM, mime))
+            if self.settings["use_curl"]:
+                self.CPS_play(('file://' + self.STREAM, mime))
+            else:
+                self.CPS_play((url, mime))
             self.CPS_send_status(image=image or image_path('generic.png'),
                                  track=self.now_playing)
             self.last_message = (True, message)

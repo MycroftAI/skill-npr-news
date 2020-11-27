@@ -20,8 +20,13 @@
                         "type": "text",
                         "label": "Custom News Feed url:",
                         "value": ""
+                    },
+                    {
+                        "name": "use_curl",
+                        "type": "checkbox",
+                        "label": "use curl instead of playing stream directly",
+                        "value": "true"
                     }
-
                 ]
             }
         ]
