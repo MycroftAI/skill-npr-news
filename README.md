@@ -18,6 +18,7 @@ Supported stations include:
 - [US] Fox News
 - [US] NPR News Now
 - [US] PBS NewsHour
+- [ES] CCMA Catalunya Informació
 
 ## Examples
 * "Play the news"
