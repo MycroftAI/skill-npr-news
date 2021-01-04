@@ -16,24 +16,32 @@ import pytz
 import requests
 from datetime import datetime
 
+
 def abc():
     """Custom news fetcher for ABC News Australia briefing"""
     # Format template with (hour, day, month)
-    url_temp = ('https://abcmedia.akamaized.net/news/audio/news-briefings/'
-                'top-stories/{}{}/NAUs_{}00flash_{}{}_nola.mp3')
+    url_base = 'https://abcmedia.akamaized.net/news/audio/news-briefings/top-stories/'
+    url_templates = (
+        '{}{}/NAUs_{}00Flash_{}{}_nola.mp3',
+        '{}{}/NAUs_{}00flash_{}{}_nola.mp3',
+        '{}{}/NAUs_Flash{}00_{}{}_nola.mp3',
+        '{}{}/NAUs_flash{}00_{}{}_nola.mp3'
+        )
     now = pytz.utc.localize(datetime.utcnow())
     syd_tz = pytz.timezone('Australia/Sydney')
     syd_dt = now.astimezone(syd_tz)
-    hour = syd_dt.strftime('%H')
-    day = syd_dt.strftime('%d')
-    month = syd_dt.strftime('%m')
     year = syd_dt.strftime('%Y')
-    url = url_temp.format(year, month, hour, day, month)
-
-    # If this hours news is unavailable try the hour before
-    response = requests.get(url)
-    if response.status_code != 200:
-        hour = str(int(hour) - 1)
-        url = url_temp.format(hour, day, month)
-
-    return url
+    month = syd_dt.strftime('%m')
+    day = syd_dt.strftime('%d')
+    hour = syd_dt.strftime('%H')
+    
+    for url_temp in url_templates:
+        url = url_base + url_temp.format(year, month, hour, day, month)
+        # If this hours news is unavailable try the hour before
+        response = requests.get(url)
+        if response.status_code != 200:
+            hour = str(int(hour) - 1)
+            url = url_base + url_temp.format(year, month, hour, day, month)
+            response = requests.get(url)
+        if response.status_code == 200:
+            return url
