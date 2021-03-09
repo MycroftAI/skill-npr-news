@@ -16,7 +16,7 @@ import pytz
 import requests
 from datetime import datetime
 
-def abc():
+def get_url():
     """Custom news fetcher for ABC News Australia briefing"""
     # Format template with (hour, day, month)
     url_temp = ('https://abcmedia.akamaized.net/news/audio/news-briefings/'
