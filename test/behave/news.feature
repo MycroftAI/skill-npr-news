@@ -33,6 +33,7 @@ Feature: mycroft-news
      | tell me the headlines |
      | tell me what's happening |
      | what's happening |
+     | other news |
 
   Scenario Outline: Play the news using Common Play Framework
     Given an english speaking user
@@ -51,6 +52,7 @@ Feature: mycroft-news
      | play today's news |
      | play today's headlines |
      | play today's news briefing |
+     | play the news again |
 
   Scenario Outline: stop news playback
     Given an english speaking user
