@@ -1,10 +1,12 @@
 Feature: mycroft-news
 
-  Scenario Outline: what's the news
+  Background:
     Given an english speaking user
-    And nothing is playing
-      When the user says "<what's the news>"
-      Then "mycroft-news" should reply with dialog from "news.dialog"
+
+  Scenario Outline: what's the news
+    Given nothing is playing
+    When the user says "<what's the news>"
+    Then "mycroft-news" should reply with dialog from "news.dialog"
 
    Examples: What's the news - standard intent
      | what's the news |
@@ -36,10 +38,9 @@ Feature: mycroft-news
      | other news |
 
   Scenario Outline: Play the news using Common Play Framework
-    Given an english speaking user
-    And nothing is playing
-      When the user says "<play the news>"
-      Then "mycroft-playback-control" should reply with dialog from "news.dialog"
+    Given nothing is playing
+    When the user says "<play the news>"
+    Then "mycroft-playback-control" should reply with dialog from "news.dialog"
 
    Examples: play the news
      | play the news |
@@ -55,10 +56,9 @@ Feature: mycroft-news
      | play the news again |
 
   Scenario Outline: stop news playback
-    Given an english speaking user
-      And news is playing
-      When the user says "<stop the news>"
-      Then "mycroft-news" should stop playing
+    Given news is playing
+    When the user says "<stop the news>"
+    Then "mycroft-news" should stop playing
 
    Examples: stop news playback
      | stop the news |
@@ -68,10 +68,9 @@ Feature: mycroft-news
   @xfail
   # Jira MS-108 https://mycroft.atlassian.net/browse/MS-108
   Scenario Outline: Failing stop news playback
-    Given an english speaking user
-      And news is playing
-      When the user says "<stop the news>"
-      Then "mycroft-news" should stop playing
+    Given news is playing
+    When the user says "<stop the news>"
+    Then "mycroft-news" should stop playing
 
    Examples: stop news playback
      | stop the news |
@@ -87,19 +86,17 @@ Feature: mycroft-news
      | silence |
 
   Scenario Outline: pause news playback
-    Given an english speaking user
-      When the user says "<pause the news>"
-      Then "mycroft-news" should pause playing
+    When the user says "<pause the news>"
+    Then "mycroft-news" should pause playing
 
    Examples: pause news playback
      | pause the news |
      | pause |
 
   Scenario Outline: play a specific news channel
-    Given an english speaking user
-      When the user says "<play a specific news channel>"
-      Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
-      Then mycroft reply should contain "<specified channel>"
+    When the user says "<play a specific news channel>"
+    Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
+    Then mycroft reply should contain "<specified channel>"
 
    Examples: play specific news channel
      | play a specific news channel | specified channel |
@@ -118,9 +115,8 @@ Feature: mycroft-news
 
   @xfail
   Scenario Outline: give me the news from channel
-    Given an english speaking user
-      When the user says "<give me news from a specific channel>"
-      Then mycroft reply should contain "<specified channel>"
+    When the user says "<give me news from a specific channel>"
+    Then mycroft reply should contain "<specified channel>"
 
    Examples:
      | give me news from a specific channel | specified channel |
@@ -131,15 +127,11 @@ Feature: mycroft-news
      | what are the headlines from WDR | WDR |
 
   Scenario Outline: play music with names similar to news channels
-    Given an english speaking user
-     When the user says "<play some music>"
-     Then "NewsSkill" should not reply
+    When the user says "<play some music>"
+    Then "NewsSkill" should not reply
 
     Examples:
       | play some music |
-      | what time is it |
-      | what's the weather |
-      | cancel timer |
       | play metallica |
       | play 1live on tunein |
       | play sunshine on tunein |
@@ -149,3 +141,22 @@ Feature: mycroft-news
       | play the song skinamarinky dinky dink |
       | play the song python programming |
       | play the song covid-19 |
+
+  Scenario Outline: play radio from stations not defined in News Skill
+    When the user says "<play some radio station>"
+    Then "NewsSkill" should not reply
+
+    Examples:
+      | play some radio station |
+      | play kuow |
+      | play kuow radio |
+
+  Scenario Outline: Utterances unrelated to the News Skill
+    When the user says "<something unrelated to this skill>"
+    Then "NewsSkill" should not reply
+
+    Examples:
+      | something unrelated to this skill |
+      | what time is it |
+      | what's the weather |
+      | cancel timer |
