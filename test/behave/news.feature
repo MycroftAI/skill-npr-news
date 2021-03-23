@@ -12,27 +12,20 @@ Feature: mycroft-news
      | what's the news |
      | what's the news |
      | what's new |
-     | what's the news |
      | what's the latest news |
      | let's hear the news |
      | what's this hour's news |
      | give me the news |
      | news |
      | news briefing |
+     | breaking news |
      | brief me |
      | brief me on the headlines |
      | give me the headlines |
-     | give me the breaking news |
      | what's the breaking news |
-     | breaking news |
      | give me the news updates |
-     | what's today's news |
      | what's today's briefing |
      | what are today's headlines |
-     | what's today's headlines |
-     | tell me the news |
-     | tell me today's headlines |
-     | tell me the headlines |
      | tell me what's happening |
      | what's happening |
      | other news |
