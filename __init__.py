@@ -199,6 +199,10 @@ class NewsSkill(CommonPlaySkill):
 
         # Remove "the" as it matches too well will "other"
         search_phrase = phrase.lower().replace('the', '').strip()
+
+        if not self.voc_match(search_phrase, "News"):
+            # User not asking for the news - do not match.
+            return
         
         # Catch any short explicit phrases eg "play the news"
         news_phrases = self.translate_list("PlayTheNews") or []
