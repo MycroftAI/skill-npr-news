@@ -135,6 +135,11 @@ FEEDS = {
 # If feed URL ends in specific filetype, just play it
 DIRECT_PLAY_FILETYPES = ['.mp3']
 
+# Minimum confidence levels
+CONF_EXACT_MATCH = 0.9
+CONF_LIKELY_MATCH = 0.7
+CONF_GENERIC_MATCH = 0.6
+
 
 def find_mime(url):
     mime = 'audio/mpeg'
@@ -193,11 +198,15 @@ class NewsSkill(CommonPlaySkill):
         matched_feed = { 'key': None, 'conf': 0.0 }
 
         # Remove "the" as it matches too well will "other"
-        search_phrase = phrase.lower().replace('the', '')
+        search_phrase = phrase.lower().replace('the', '').strip()
+
+        if not self.voc_match(search_phrase, "News"):
+            # User not asking for the news - do not match.
+            return
         
         # Catch any short explicit phrases eg "play the news"
         news_phrases = self.translate_list("PlayTheNews") or []
-        if search_phrase.strip() in news_phrases:
+        if search_phrase in news_phrases:
             station_key = self.settings.get("station", "not_set")
             if station_key == "not_set":
                 station_key = self.get_default_station()
@@ -213,17 +222,17 @@ class NewsSkill(CommonPlaySkill):
             Returns:
                 tuple: feed being matched, confidence level
             """
-            phrase = phrase.lower().replace("play", "")
+            phrase = phrase.lower().replace("play", "").strip()
             feed_short_name = feed.lower()
+            feed_long_name = FEEDS[feed][0].lower()
             short_name_confidence = fuzzy_match(phrase, feed_short_name)
-            long_name_confidence = fuzzy_match(phrase, FEEDS[feed][0].lower())
+            long_name_confidence = fuzzy_match(phrase, feed_long_name)
             # Test with "News" added in case user only says acronym eg "ABC".
             # As it is short it may not provide a high match confidence.
             news_keyword = self.translate("OnlyNews").lower()
             modified_short_name = "{} {}".format(feed_short_name, news_keyword)
             variation_confidence = fuzzy_match(phrase, modified_short_name)
-            key_confidence = 0.6 if news_keyword in phrase and feed_short_name in phrase else 0.0
-
+            key_confidence = CONF_GENERIC_MATCH if news_keyword in phrase and feed_short_name in phrase else 0.0
 
             conf = max((short_name_confidence, long_name_confidence,
                         variation_confidence, key_confidence))
@@ -244,21 +253,20 @@ class NewsSkill(CommonPlaySkill):
                 matched_feed['key'] = self.alt_feed_names[name]
             
         # If no match but utterance contains news, return low confidence level
-        if matched_feed['conf'] == 0.0 and self.voc_match(search_phrase, "News"):
-            matched_feed = { 'key': None, 'conf': 0.5 }
+        if matched_feed['conf'] < CONF_GENERIC_MATCH and self.voc_match(search_phrase, "News"):
+            matched_feed = { 'key': self.get_default_station(), 'conf': CONF_GENERIC_MATCH }
 
         feed_title = FEEDS[matched_feed['key']][0]
-        if matched_feed['conf'] >= 0.9:
+        if matched_feed['conf'] >= CONF_EXACT_MATCH:
             match_level = CPSMatchLevel.EXACT  
-        elif matched_feed['conf'] >= 0.7:
+        elif matched_feed['conf'] >= CONF_LIKELY_MATCH:
             match_level = CPSMatchLevel.ARTIST
-        elif matched_feed['conf'] >= 0.5:
+        elif matched_feed['conf'] >= CONF_GENERIC_MATCH:
             match_level = CPSMatchLevel.CATEGORY
         else: 
             match_level = None
             return match_level
-        feed_data = { 'feed': matched_feed['key']}
-
+        feed_data = {'feed': matched_feed['key']}
         return (feed_title, match_level, feed_data)
 
     def CPS_start(self, phrase, data):
