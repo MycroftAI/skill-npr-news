@@ -338,7 +338,7 @@ class NewsSkill(CommonPlaySkill):
             self.stop()
             return True  # consume this phrase
         else:
-            self.log.info("NewsSkill:Converse confused by %s" % (utterances[0],))
+            self.log.info("NewsSkill:Converse confused by %s" % (utterances,))
 
         return False  # don't consume this phrase
 
