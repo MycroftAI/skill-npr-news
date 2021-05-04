@@ -332,6 +332,16 @@ class NewsSkill(CommonPlaySkill):
             media_url = media_url.split('?')[0]
         return media_url
 
+    def converse(self, utterances, lang="en-us"):
+        """if playing see if user wants to quit"""
+        if utterances and self.voc_match(utterances[0], "Stop"):
+            self.stop()
+            return True  # consume this phrase
+        else:
+            self.log.info("NewsSkill:Converse confused by %s" % (utterances[0],))
+
+        return False  # don't consume this phrase
+
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
