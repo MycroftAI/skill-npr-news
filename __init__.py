@@ -413,6 +413,7 @@ class NewsSkill(CommonPlaySkill):
         # Stop download process if it's running.
         if self.curl:
             self.log.info("Stopping the News Skill playback")
+            self.audioservice.stop()
             try:
                 self.curl.kill()
                 self.curl.communicate()
