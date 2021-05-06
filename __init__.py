@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 import feedparser
 import os
 from os.path import join, abspath, dirname
@@ -35,6 +35,7 @@ from mycroft.util.parse import fuzzy_match
 from mycroft.util.time import now_local
 
 from .stations.abc import abc
+from .stations.ft import ft
 
 
 def image_path(filename):
@@ -129,6 +130,7 @@ FEEDS = {
     "OE3": ("Ö3 Nachrichten",
             "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
             None),
+    "FT": ("Financial Times", ft, image_path('FT.png')),
 }
 
 
