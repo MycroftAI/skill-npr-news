@@ -337,8 +337,6 @@ class NewsSkill(CommonPlaySkill):
         if utterances and self.voc_match(utterances[0], "Stop"):
             self.stop()
             return True  # consume this phrase
-        else:
-            self.log.info("NewsSkill:Converse confused by %s" % (utterances,))
 
         return False  # don't consume this phrase
 
