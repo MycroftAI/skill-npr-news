@@ -57,6 +57,15 @@ Feature: mycroft-news
      | stop the news |
      | stop |
      | stop playing |
+     | quit |
+     | end |
+     | turn it off |
+     | turn off news |
+     | turn off music |
+     | shut it off |
+     | shut up |
+     | be quiet |
+     | end playback |
 
   @xfail
   # Jira MS-108 https://mycroft.atlassian.net/browse/MS-108
@@ -67,15 +76,8 @@ Feature: mycroft-news
 
    Examples: stop news playback
      | stop the news |
-     | quit |
-     | end |
      | turn it off |
-     | turn off news |
-     | turn off music |
-     | shut it off |
      | shut up |
-     | be quiet |
-     | end playback |
      | silence |
 
   Scenario Outline: pause news playback
