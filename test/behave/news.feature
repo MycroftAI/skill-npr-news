@@ -105,6 +105,8 @@ Feature: mycroft-news
      | Play WDR news | WDR |
      | play news from bbc | BBC News |
      | Play news from ekot | Ekot |
+     | Play financial news | FT |
+     | Play news from the Financial Times | FT |
 
   @xfail
   Scenario Outline: give me the news from channel
