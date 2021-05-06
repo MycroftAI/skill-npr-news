@@ -189,6 +189,7 @@ class NewsSkill(CommonPlaySkill):
         time.sleep(1)
         self.log.debug('Disabling restart intent')
         self.disable_intent('restart_playback')
+        self.disable_intent('stop')
         # Default feed per country code, if user has not selected a default
         self.default_feed = self.translate_namedvalues('country.default')
         # Longer titles or alternative common names of feeds for searching
@@ -332,14 +333,6 @@ class NewsSkill(CommonPlaySkill):
             media_url = media_url.split('?')[0]
         return media_url
 
-    def converse(self, utterances, lang="en-us"):
-        """if playing see if user wants to quit"""
-        if utterances and self.voc_match(utterances[0], "Stop"):
-            self.stop()
-            return True  # consume this phrase
-
-        return False  # don't consume this phrase
-
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
@@ -396,6 +389,7 @@ class NewsSkill(CommonPlaySkill):
                                  track=self.now_playing)
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
+            self.enable_intent('stop')
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
@@ -408,14 +402,17 @@ class NewsSkill(CommonPlaySkill):
         if self.last_message:
             self.handle_latest_news(self.last_message[1])
 
+    @intent_handler(IntentBuilder('').require('Stop'))
     def stop(self):
         # Disable restarting when stopped
         if self.last_message:
             self.disable_intent('restart_playback')
+            self.disable_intent('stop')
             self.last_message = None
 
         # Stop download process if it's running.
         if self.curl:
+            self.log.info("Stopping the News Skill playback")
             try:
                 self.curl.kill()
                 self.curl.communicate()
