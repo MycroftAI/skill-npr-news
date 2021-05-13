@@ -61,8 +61,8 @@ def tsf():
     return uri
 
 
-def gbp():
-    """Custom news fetcher for GBP news."""
+def gpb():
+    """Custom news fetcher for GPB news."""
     feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
     data = feedparser.parse(feed)
     next_link = None
@@ -122,7 +122,7 @@ FEEDS = {
             image_path('WDR')),
     'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
             image_path('Yle.png')),
-    "GBP": ("Georgia Public Radio", gbp, None),
+    "GPB": ("Georgia Public Radio", gpb, None),
     "RDP": ("RDP Africa", "http://www.rtp.pt//play/itunes/5442", None),
     "RNE": ("National Spanish Radio",
             "http://api.rtve.es/api/programas/36019/audios.rs", None),
