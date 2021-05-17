@@ -196,6 +196,13 @@ class NewsSkill(CommonPlaySkill):
         # Longer titles or alternative common names of feeds for searching
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
+        self.skill_control.states = {
+                'inactive':['handle_latest_news'],
+                'active':['restart_playback']
+                }
+        self.skill_control.state = 'inactive'
+        self.skill_control.category = 'common_play'
+
     def CPS_match_query_phrase(self, phrase):
         matched_feed = { 'key': None, 'conf': 0.0 }
 
@@ -334,6 +341,21 @@ class NewsSkill(CommonPlaySkill):
             media_url = media_url.split('?')[0]
         return media_url
 
+    def converse(self, utterances, lang="en-us"):
+        LOG.debug("NPR converse entered, utterances:%s" % (utterances,))
+        """if playing see if user wants to quit"""
+        # custom stop handler
+        # note this will work for now but really this should
+        # be an intent which is enabled while in the active state
+        # and disabled otherwise
+        if utterances and self.voc_match(utterances[0], "Stop"):
+            self.stop()
+            return True  # consume this phrase
+        else:
+            self.log.info("NewsSkill:Converse confused by %s - let common play handle it" % (utterances,))
+
+        return False  # don't consume this phrase
+
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
@@ -389,7 +411,8 @@ class NewsSkill(CommonPlaySkill):
             self.CPS_send_status(image=image or image_path('generic.png'),
                                  track=self.now_playing)
             self.last_message = (True, message)
-            self.enable_intent('restart_playback')
+            self.change_state('active')
+            self.enable_intent('restart_playback')  # should be unnecessary
 
         except Exception as e:
             self.log.error("Error: {0}".format(e))
@@ -403,6 +426,7 @@ class NewsSkill(CommonPlaySkill):
             self.handle_latest_news(self.last_message[1])
 
     def stop(self):
+        self.change_state('inactive')
         # Disable restarting when stopped
         if self.last_message:
             self.disable_intent('restart_playback')
