@@ -27,7 +27,6 @@ from pytz import timezone
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
-from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory, LOG
@@ -154,8 +153,8 @@ def find_mime(url):
 def contains_html(file):
     """Reads file and reports if a <html> tag is contained.
 
-    Makes a temporary copy of the file to prevent locking downloads in 
-    progress. This should not be considered a robust method of testing if a 
+    Makes a temporary copy of the file to prevent locking downloads in
+    progress. This should not be considered a robust method of testing if a
     file is a HTML document, but sufficient for this purpose.
 
     Args:
@@ -182,9 +181,9 @@ def contains_html(file):
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
-        self.curl = None
         self.now_playing = None
         self.last_message = None
+        self.curl = None
         self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
 
     def initialize(self):
@@ -197,7 +196,7 @@ class NewsSkill(CommonPlaySkill):
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
 
     def CPS_match_query_phrase(self, phrase):
-        matched_feed = { 'key': None, 'conf': 0.0 }
+        matched_feed = {'key': None, 'conf': 0.0}
 
         # Remove "the" as it matches too well will "other"
         search_phrase = phrase.lower().replace('the', '').strip()
@@ -205,14 +204,14 @@ class NewsSkill(CommonPlaySkill):
         if not self.voc_match(search_phrase, "News"):
             # User not asking for the news - do not match.
             return
-        
+
         # Catch any short explicit phrases eg "play the news"
         news_phrases = self.translate_list("PlayTheNews") or []
         if search_phrase in news_phrases:
             station_key = self.settings.get("station", "not_set")
             if station_key == "not_set":
                 station_key = self.get_default_station()
-            matched_feed = { 'key': station_key, 'conf': 1.0 }        
+            matched_feed = {'key': station_key, 'conf': 1.0}
 
         def match_feed_name(phrase, feed):
             """Determine confidence that a phrase requested a given feed.
@@ -253,19 +252,20 @@ class NewsSkill(CommonPlaySkill):
             if conf > matched_feed['conf']:
                 matched_feed['conf'] = conf
                 matched_feed['key'] = self.alt_feed_names[name]
-            
+
         # If no match but utterance contains news, return low confidence level
         if matched_feed['conf'] < CONF_GENERIC_MATCH and self.voc_match(search_phrase, "News"):
-            matched_feed = { 'key': self.get_default_station(), 'conf': CONF_GENERIC_MATCH }
+            matched_feed = {'key': self.get_default_station(),
+                            'conf': CONF_GENERIC_MATCH}
 
         feed_title = FEEDS[matched_feed['key']][0]
         if matched_feed['conf'] >= CONF_EXACT_MATCH:
-            match_level = CPSMatchLevel.EXACT  
+            match_level = CPSMatchLevel.EXACT
         elif matched_feed['conf'] >= CONF_LIKELY_MATCH:
             match_level = CPSMatchLevel.ARTIST
         elif matched_feed['conf'] >= CONF_GENERIC_MATCH:
             match_level = CPSMatchLevel.CATEGORY
-        else: 
+        else:
             match_level = None
             return match_level
         feed_data = {'feed': matched_feed['key']}
@@ -288,8 +288,8 @@ class NewsSkill(CommonPlaySkill):
         return feed_code
 
     def get_station(self):
-        """Get station user selected from settings or default station. 
-        
+        """Get station user selected from settings or default station.
+
         Fallback order:
         1. User selected station
         2. User defined custom url
@@ -350,7 +350,7 @@ class NewsSkill(CommonPlaySkill):
     def handle_latest_news(self, message=None, feed=None):
         try:
             self.stop()
-            rss = None
+            station_url = None
             self.now_playing = None
             # Basic check for station title in utterance
             # TODO - expand this - probably abstract from CPS Matching
@@ -359,35 +359,13 @@ class NewsSkill(CommonPlaySkill):
                     if f.lower() in message.data["utterance"].lower():
                         feed = f
             if feed and feed in FEEDS and feed != 'other':
-                self.now_playing, rss, image = FEEDS[feed]
+                station_title, station_url, station_image = FEEDS[feed]
             else:
-                self.now_playing, rss, image = self.get_station()
+                station_title, station_url, station_image = self.get_station()
 
             # Speak intro while downloading in background
-            self.speak_dialog('news', data={"from": self.now_playing})
-
-            url = self.get_media_url(rss)
-            mime = find_mime(url)
-            # (Re)create Fifo
-            if os.path.exists(self.STREAM):
-                os.remove(self.STREAM)
-            os.mkfifo(self.STREAM)
-
-            self.log.debug('Running curl {}'.format(url))
-            args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
-            self.curl = subprocess.Popen(args)
-
-            # Check if downloaded file is actually an error page
-            if contains_html(self.STREAM):
-                raise Exception('Could not fetch valid audio file.')
-
-            # Show news title, if there is one
-            wait_while_speaking()
-            # Begin the news stream
-            self.log.info('Feed: {}'.format(feed))
-            self.CPS_play(('file://' + self.STREAM, mime))
-            self.CPS_send_status(image=image or image_path('generic.png'),
-                                 track=self.now_playing)
+            self.speak_dialog('news', data={"from": station_title})
+            self._play_station(station_title, station_url, station_image)
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
 
@@ -395,6 +373,47 @@ class NewsSkill(CommonPlaySkill):
             self.log.error("Error: {0}".format(e))
             self.log.info("Traceback: {}".format(traceback.format_exc()))
             self.speak_dialog("could.not.start.the.news.feed")
+
+    def _play_station(self, station_title, station_url, station_image):
+        """Play the given station using the most appropriate service."""
+        # TODO convert all station references to named tuples.
+        self.log.info(f'Playing News feed: {station_title}')
+        media_url = self.get_media_url(station_url)
+        self.log.info(f'News media url: {media_url}')
+        mime = find_mime(media_url)
+        # Ensure announcement of station has finished before playing
+        wait_while_speaking()
+        # If backend cannot handle https, download the file and provide a local stream.
+        if media_url[:8] == 'https://' and not self.is_https_supported():
+            self.download_media_file(media_url)
+            self.CPS_play((f"file://{self.STREAM}", mime))
+        else:
+            self.CPS_play((media_url, mime))
+        self.CPS_send_status(
+            image=station_image or image_path('generic.png'),
+            track=station_title
+        )
+        self.now_playing = station_title
+
+    def is_https_supported(self):
+        """Check if any available audioservice backend supports https"""
+        for name, service in self.audioservice.available_backends().items():
+            if 'https' in service['supported_uris']:
+                return True
+        return False
+
+    def download_media_file(self, url):
+        """Download a media file and return path to the stream"""
+        # (Re)create Fifo
+        if os.path.exists(self.STREAM):
+            os.remove(self.STREAM)
+        os.mkfifo(self.STREAM)
+        self.log.debug('Running curl {}'.format(url))
+        args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
+        self.curl = subprocess.Popen(args)
+        # Check if downloaded file is actually an error page
+        if contains_html(self.STREAM):
+            raise Exception('Could not fetch valid audio file.')
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):
