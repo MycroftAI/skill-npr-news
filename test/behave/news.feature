@@ -10,25 +10,20 @@ Feature: mycroft-news
 
    Examples: What's the news - standard intent
      | what's the news |
-     | what's the news |
-     | what's new |
-     | what's the latest news |
-     | let's hear the news |
-     | what's this hour's news |
-     | give me the news |
      | news |
+     | brief me |
+     | other news |
+     | what's new |
      | news briefing |
      | breaking news |
-     | brief me |
-     | brief me on the headlines |
-     | give me the headlines |
+     | what's the news |
+     | let's hear the news |
+     | what's the latest news |
+     | what's today's briefing |
      | what's the breaking news |
      | give me the news updates |
-     | what's today's briefing |
-     | what are today's headlines |
      | tell me what's happening |
-     | what's happening |
-     | other news |
+     | brief me on the headlines |
 
   Scenario Outline: Play the news using Common Play Framework
     Given nothing is playing
@@ -38,14 +33,12 @@ Feature: mycroft-news
    Examples: play the news
      | play the news |
      | play the news |
-     | play news briefing |
      | play news |
      | play news briefing |
      | play headlines |
      | play the latest news |
      | play today's news |
      | play today's headlines |
-     | play today's news briefing |
      | play the news again |
 
   Scenario Outline: stop news playback
