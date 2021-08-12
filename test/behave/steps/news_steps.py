@@ -16,6 +16,7 @@ import time
 
 from behave import given, then
 
+from mycroft.skills.audioservice import AudioService
 from mycroft.messagebus import Message
 from test.integrationtests.voight_kampff import emit_utterance, mycroft_responses, then_wait
 
@@ -42,27 +43,55 @@ def wait_for_service_message(context, message_type):
 def given_news_playing(context):
     emit_utterance(context.bus, 'what is the news')
     wait_for_service_message(context, 'play')
-    time.sleep(1)
+    time.sleep(3)
     context.bus.clear_messages()
 
 
 @given('nothing is playing')
 def given_nothing_playing(context):
+    # TODO simplify this when the Common Play service is updated
+    # First sleep to give any previous calls to play enough time to start
+    time.sleep(2)
     context.bus.emit(Message('mycroft.stop'))
-    time.sleep(5)
+    context.audio_service = AudioService(context.bus)
+    time.sleep(3)
+    for i in range(5):
+        if context.audio_service.is_playing:
+            context.audio_service.stop()
+            time.sleep(1)
+        else:
+            break
+    assert not context.audio_service.is_playing
     context.bus.clear_messages()
-
-
-@then('playback should start')
-def then_playback_start(context):
-    wait_for_service_message(context, 'start')
 
 
 @then('"mycroft-news" should stop playing')
 def then_playback_stop(context):
     wait_for_service_message(context, 'stop')
+    context.audio_service = AudioService(context.bus)
+    for i in range(5):
+        if not context.audio_service.is_playing:
+            break
+        time.sleep(1)
+    assert not context.audio_service.is_playing
+    context.bus.clear_messages()
 
 
 @then('"mycroft-news" should pause playing')
 def then_playback_pause(context):
     wait_for_service_message(context, 'pause')
+
+@then('"{station}" should play')
+def then_station_playback_started(context, station):
+    wait_for_service_message(context, 'play')
+    context.audio_service = AudioService(context.bus)
+    for i in range(5):
+        if context.audio_service.is_playing:
+            break
+        else:
+            time.sleep(1)
+    assert context.audio_service.is_playing
+    track_info = context.audio_service.track_info()
+    # If track info isn't supported by audio backend
+    # the artist value will be blank
+    assert track_info['artist'] in ['', station]

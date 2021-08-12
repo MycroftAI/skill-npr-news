@@ -87,26 +87,28 @@ Feature: mycroft-news
      | pause |
 
   Scenario Outline: play a specific news channel
+    Given nothing is playing
     When the user says "<play a specific news channel>"
     Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
     Then mycroft reply should contain "<specified channel>"
+    Then "<specified channel>" should play
 
    Examples: play specific news channel
      | play a specific news channel | specified channel |
      | play the BBC news | BBC News |
-     | Play the NPR news | NPR News |
+     | Play the NPR news | NPR News Now |
      | Play AP hourly news | AP Hourly Radio News |
      | Play the news from Associated Press | AP Hourly Radio News |
      | Play CBC news | CBC News |
      | Play Fox News | Fox News |
-     | Play PBS news | PBS Newshour |
+     | Play PBS news | PBS NewsHour |
      | Play YLE news | YLE |
      | Play  DLF news | DLF |
      | Play WDR news | WDR |
      | play news from bbc | BBC News |
      | Play news from ekot | Ekot |
-     | Play financial news | FT |
-     | Play news from the Financial Times | FT |
+     | Play financial news | Financial Times |
+     | Play news from the Financial Times | Financial Times |
 
   @xfail
   Scenario Outline: give me the news from channel
