@@ -391,7 +391,7 @@ class NewsSkill(CommonPlaySkill):
             self.CPS_play((media_url, mime))
         self.CPS_send_status(
             image=station_image or image_path('generic.png'),
-            track=station_title
+            artist=station_title
         )
         self.now_playing = station_title
 
