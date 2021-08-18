@@ -92,6 +92,9 @@ def then_station_playback_started(context, station):
             time.sleep(1)
     assert context.audio_service.is_playing
     track_info = context.audio_service.track_info()
-    # If track info isn't supported by audio backend
-    # the artist value will be blank
-    assert track_info['artist'] in ['', station]
+    # If track info isn't supported by audio backend artist will be blank
+    if track_info.get('artist'):
+        assert track_info['artist'] in ['', station]
+    elif track_info.get('artists'):
+        # The VLC backend does not currently report 'artist'
+        assert track_info['artists'] == [None]
