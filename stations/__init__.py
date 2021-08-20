@@ -23,22 +23,52 @@ from .tsf import get_tsf_url
 
 # NOTE: This list has to be in sync with the settingsmeta select options.
 stations = dict(
-    ABC = FetcherStation('ABC','ABC News Australia', get_abc_url, 'ABC.png'),
-    AP = RSSStation('AP', 'AP Hourly Radio News', 'https://www.spreaker.com/show/1401466/episodes/feed', 'AP.png'),
-    BBC = RSSStation('BBC', 'BBC News', 'https://podcasts.files.bbci.co.uk/p02nq0gn.rss', 'BBC.png'),
-    CBC = RSSStation('CBC', 'CBC News', 'https://www.cbc.ca/podcasting/includes/hourlynews.xml', 'CBC.png'),
-    DLF = RSSStation('DLF', 'DLF', 'https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml', 'DLF.png'),
-    Ekot = RSSStation('Ekot', 'Ekot', 'https://api.sr.se/api/rss/pod/3795', 'Ekot.png'),
-    FOX = RSSStation('FOX', 'Fox News', 'http://feeds.foxnewsradio.com/FoxNewsRadio', 'FOX.png'),
-    FT = FetcherStation('FT','Financial Times', get_ft_url, 'FT.png'),
-    GPB = FetcherStation('GPB','Georgia Public Radio', get_gpb_url, None),
-    NPR = RSSStation('NPR', 'NPR News Now', 'https://www.npr.org/rss/podcast.php?id=500005', 'NPR.png'),
-    OE3 = FileStation('OE3', 'Ö3 Nachrichten', 'https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3', None),
-    PBS = RSSStation('PBS', 'PBS NewsHour', 'https://www.pbs.org/newshour/feeds/rss/podcasts/show', 'PBS.png'),
-    RDP = RSSStation('RDP', 'RDP Africa', 'http://www.rtp.pt//play/itunes/5442', None),
-    RNE = RSSStation('RNE', 'National Spanish Radio', 'http://api.rtve.es/api/programas/36019/audios.rs', None),
-    TSF = FetcherStation('TSF','TSF Radio', get_tsf_url, None),
-    VRT = FileStation('VRT', 'VRT Nieuws', 'https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3', None),
-    WDR = RSSStation('WDR', 'WDR', 'https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast', 'WDR.png'),
-    YLE = RSSStation('YLE', 'YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss', 'Yle.png'),
+    ABC=FetcherStation('ABC', 'ABC News Australia', get_abc_url, 'ABC.png'),
+    AP=RSSStation('AP', 'AP Hourly Radio News',
+                  'https://www.spreaker.com/show/1401466/episodes/feed', 'AP.png'),
+    BBC=RSSStation('BBC', 'BBC News',
+                   'https://podcasts.files.bbci.co.uk/p02nq0gn.rss', 'BBC.png'),
+    CBC=RSSStation('CBC', 'CBC News',
+                   'https://www.cbc.ca/podcasting/includes/hourlynews.xml', 'CBC.png'),
+    DLF=RSSStation(
+        'DLF', 'DLF', 'https://www.deutschlandfunk.de/podcast-nachrichten.1257.de.podcast.xml', 'DLF.png'),
+    Ekot=RSSStation(
+        'Ekot', 'Ekot', 'https://api.sr.se/api/rss/pod/3795', 'Ekot.png'),
+    FOX=RSSStation('FOX', 'Fox News',
+                   'http://feeds.foxnewsradio.com/FoxNewsRadio', 'FOX.png'),
+    FT=FetcherStation('FT', 'Financial Times', get_ft_url, 'FT.png'),
+    GPB=FetcherStation('GPB', 'Georgia Public Radio', get_gpb_url, None),
+    NPR=RSSStation('NPR', 'NPR News Now',
+                   'https://www.npr.org/rss/podcast.php?id=500005', 'NPR.png'),
+    OE3=FileStation('OE3', 'Ö3 Nachrichten',
+                    'https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3', None),
+    PBS=RSSStation('PBS', 'PBS NewsHour',
+                   'https://www.pbs.org/newshour/feeds/rss/podcasts/show', 'PBS.png'),
+    RDP=RSSStation('RDP', 'RDP Africa',
+                   'http://www.rtp.pt//play/itunes/5442', None),
+    RNE=RSSStation('RNE', 'National Spanish Radio',
+                   'http://api.rtve.es/api/programas/36019/audios.rs', None),
+    TSF=FetcherStation('TSF', 'TSF Radio', get_tsf_url, None),
+    VRT=FileStation('VRT', 'VRT Nieuws',
+                    'https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3', None),
+    WDR=RSSStation(
+        'WDR', 'WDR', 'https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast', 'WDR.png'),
+    YLE=RSSStation(
+        'YLE', 'YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss', 'Yle.png'),
 )
+
+
+def set_custom_station(station_url):
+    """Create a new station from a custom url.
+
+    First tests to see if the url can be read as an RSS feed, if not assumes it is a
+    direct link.
+
+    NOTE: it cannot be a FetcherStation because you can't define the fetching function.
+    """
+    is_rss_feed = RSSStation.get_media_from_rss(station_url)
+    if is_rss_feed:
+        clazz = RSSStation
+    else:
+        clazz = FileStation
+    stations['custom'] = clazz('custom', 'Your custom station', station_url)

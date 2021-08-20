@@ -22,17 +22,18 @@ from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-from mycroft.util import get_cache_directory, LOG
+from mycroft.util import get_cache_directory
 from mycroft.util.parse import fuzzy_match
 
-from .stations import stations
-from .util import contains_html, find_mime_type
+from .stations import set_custom_station, stations
+from .stations.util import contains_html, find_mime_type
 
 
 # Minimum confidence levels
 CONF_EXACT_MATCH = 0.9
 CONF_LIKELY_MATCH = 0.7
 CONF_GENERIC_MATCH = 0.6
+
 
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
@@ -50,6 +51,16 @@ class NewsSkill(CommonPlaySkill):
         self.default_feed = self.translate_namedvalues('country.default')
         # Longer titles or alternative common names of feeds for searching
         self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
+        self.settings_change_callback = self.on_websettings_changed
+        self.on_websettings_changed()
+
+    def on_websettings_changed(self):
+        """Callback triggered anytime Skill settings are modified on backend."""
+        station_code = self.settings.get("station", "not_set")
+        custom_url = self.settings.get("custom_url")
+        if station_code == "not_set" and len(custom_url) > 0:
+            self.log.info("Creating custom News Station from Skill settings.")
+            set_custom_station(custom_url)
 
     def CPS_match_query_phrase(self, phrase):
         matched_feed = {'key': None, 'conf': 0.0}
@@ -136,34 +147,31 @@ class NewsSkill(CommonPlaySkill):
             self.handle_latest_news()
 
     def get_default_station(self):
-        country_code = self.location['city']['state']['country']['code']
-        if self.default_feed.get(country_code) is not None:
-            feed_code = self.default_feed[country_code]
-        else:
-            feed_code = "NPR"
-        return feed_code
-
-    def get_station(self):
-        """Get station user selected from settings or default station.
+        """Get default station for user.
 
         Fallback order:
-        1. User selected station
-        2. User defined custom url
-        3. Default station for country
+        1. Station defined in Skill Settings
+        2. Default station for country
+        3. NPR News as global default
         """
-        feed_code = self.settings.get("station", "not_set")
-        station_url = self.settings.get("custom_url", "")
-        if feed_code in stations.keys():
-            station = stations[feed_code]
-        # TODO Fix fallback to custom default
-        # elif len(station_url) > 0:
-        #     title = stations["custom"][0]
-        #     image = None
-        else:
-            feed_code = self.get_default_station()
-            station = stations[feed_code]
-
+        station = None
+        station_code = self.settings.get('station', 'not_set')
+        custom_url = self.settings.get('custom_url', '')
+        if station_code != 'not_set':
+            station = stations[station_code]
+        elif len(custom_url) > 0:
+            station = stations.get('custom')
+        if station is None:
+            station = self.get_default_station_by_country()
+        if station is None:
+            station = stations['NPR']
         return station
+
+    def get_default_station_by_country(self):
+        """Get the default station based on the devices location."""
+        country_code = self.location['city']['state']['country']['code']
+        station_code = self.default_feed.get(country_code)
+        return stations.get(station_code)
 
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
@@ -192,10 +200,11 @@ class NewsSkill(CommonPlaySkill):
             if feed and feed in stations and feed != 'other':
                 selected_station = stations[feed]
             else:
-                selected_station = self.get_station()
+                selected_station = self.get_default_station()
 
             # Speak intro while downloading in background
-            self.speak_dialog('news', data={"from": selected_station.full_name})
+            self.speak_dialog(
+                'news', data={"from": selected_station.full_name})
             self._play_station(selected_station)
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
@@ -207,7 +216,6 @@ class NewsSkill(CommonPlaySkill):
 
     def _play_station(self, station):
         """Play the given station using the most appropriate service."""
-        # TODO convert all station references to named tuples.
         self.log.info(f'Playing News feed: {station.full_name}')
         media_url = station.media_uri
         self.log.info(f'News media url: {media_url}')
@@ -221,7 +229,8 @@ class NewsSkill(CommonPlaySkill):
         else:
             self.CPS_play((media_url, mime))
         self.CPS_send_status(
-            image=str(station.image_path),  # cast to str for json serialization
+            # cast to str for json serialization
+            image=str(station.image_path),
             artist=station.full_name
         )
         self.now_playing = station.full_name
