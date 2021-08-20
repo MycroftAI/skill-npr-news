@@ -15,7 +15,6 @@
 import os
 import subprocess
 import time
-import traceback
 from urllib.parse import quote
 
 from adapt.intent import IntentBuilder
@@ -23,9 +22,9 @@ from mycroft.audio import wait_while_speaking
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
-from mycroft.util.parse import fuzzy_match
 
 from .stations import set_custom_station, stations
+from .stations.match import match_station_from_utterance, Match
 from .stations.util import contains_html, find_mime_type
 
 
@@ -61,90 +60,36 @@ class NewsSkill(CommonPlaySkill):
         if station_code == "not_set" and len(custom_url) > 0:
             self.log.info("Creating custom News Station from Skill settings.")
             set_custom_station(custom_url)
-
-    def CPS_match_query_phrase(self, phrase):
-        matched_feed = {'key': None, 'conf': 0.0}
-
-        # Remove "the" as it matches too well will "other"
-        search_phrase = phrase.lower().replace('the', '').strip()
-
-        if not self.voc_match(search_phrase, "News"):
-            # User not asking for the news - do not match.
-            return
-
-        # Catch any short explicit phrases eg "play the news"
-        news_phrases = self.translate_list("PlayTheNews") or []
-        if search_phrase in news_phrases:
-            station_key = self.settings.get("station", "not_set")
-            if station_key == "not_set":
-                station_key = self.get_default_station()
-            matched_feed = {'key': station_key, 'conf': 1.0}
-
-        def match_feed_name(phrase, feed):
-            """Determine confidence that a phrase requested a given feed.
-
-            Args:
-                phrase (str): utterance from the user
-                feed (str): the station feed to match against
-
-            Returns:
-                tuple: feed being matched, confidence level
-            """
-            phrase = phrase.lower().replace("play", "").strip()
-            feed_short_name = feed.lower()
-            feed_long_name = stations[feed].full_name.lower()
-            short_name_confidence = fuzzy_match(phrase, feed_short_name)
-            long_name_confidence = fuzzy_match(phrase, feed_long_name)
-            # Test with "News" added in case user only says acronym eg "ABC".
-            # As it is short it may not provide a high match confidence.
-            news_keyword = self.translate("OnlyNews").lower()
-            modified_short_name = "{} {}".format(feed_short_name, news_keyword)
-            variation_confidence = fuzzy_match(phrase, modified_short_name)
-            key_confidence = CONF_GENERIC_MATCH if news_keyword in phrase and feed_short_name in phrase else 0.0
-
-            conf = max((short_name_confidence, long_name_confidence,
-                        variation_confidence, key_confidence))
-            return feed, conf
-
-        # Check primary feed list for matches eg 'ABC'
-        for feed in stations.values():
-            feed, conf = match_feed_name(search_phrase, feed)
-            if conf > matched_feed['conf']:
-                matched_feed['conf'] = conf
-                matched_feed['key'] = feed
-
-        # Check list of alternate names eg 'associated press' => 'AP'
-        for name in self.alt_feed_names:
-            conf = fuzzy_match(search_phrase, name)
-            if conf > matched_feed['conf']:
-                matched_feed['conf'] = conf
-                matched_feed['key'] = self.alt_feed_names[name]
-
-        # If no match but utterance contains news, return low confidence level
-        if matched_feed['conf'] < CONF_GENERIC_MATCH and self.voc_match(search_phrase, "News"):
-            matched_feed = {'key': self.get_default_station(),
-                            'conf': CONF_GENERIC_MATCH}
-
-        feed_title = stations[matched_feed['key']].full_name
-        if matched_feed['conf'] >= CONF_EXACT_MATCH:
-            match_level = CPSMatchLevel.EXACT
-        elif matched_feed['conf'] >= CONF_LIKELY_MATCH:
-            match_level = CPSMatchLevel.ARTIST
-        elif matched_feed['conf'] >= CONF_GENERIC_MATCH:
-            match_level = CPSMatchLevel.CATEGORY
-        else:
-            match_level = None
-            return match_level
-        feed_data = {'feed': matched_feed['key']}
-        return (feed_title, match_level, feed_data)
-
+        
     def CPS_start(self, phrase, data):
-        if data and data.get("feed"):
+        if data and data.get('acronym'):
             # Play the requested news service
-            self.handle_latest_news(feed=data["feed"])
+            station = stations[data['acronym']]
         else:
             # Just use the default news feed
-            self.handle_latest_news()
+            station = None
+        self.handle_play_request(station=station)
+        
+
+    def CPS_match_query_phrase(self, phrase):
+        """Respond to Common Play Service query requests."""
+        match = match_station_from_utterance(self, phrase)
+        
+        # If no match but utterance contains news, return low confidence level
+        if match.confidence < CONF_GENERIC_MATCH and self.voc_match(phrase, "News"):
+            match = Match(self.get_default_station(), CONF_GENERIC_MATCH)
+
+        # Translate match confidence levels to CPSMatchLevels
+        if match.confidence >= CONF_EXACT_MATCH:
+            match_level = CPSMatchLevel.EXACT
+        elif match.confidence >= CONF_LIKELY_MATCH:
+            match_level = CPSMatchLevel.ARTIST
+        elif match.confidence >= CONF_GENERIC_MATCH:
+            match_level = CPSMatchLevel.CATEGORY
+        else:
+            return None
+            
+        return (match.station.full_name, match_level, match.station.as_dict())
 
     def get_default_station(self):
         """Get default station for user.
@@ -176,64 +121,57 @@ class NewsSkill(CommonPlaySkill):
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         # Capture some alternative ways of requesting the news via Padatious
-        utt = message.data["utterance"]
-        match = self.CPS_match_query_phrase(utt)
+        match = match_station_from_utterance(self, message.data["utterance"])
         if match and len(match) > 2:
-            feed = match[2]["feed"]
+            station_dict = match[2]
+            station = stations[station_dict['acronym']]
         else:
-            feed = None
+            station = self.get_default_station()
 
-        self.handle_latest_news(message, feed)
+        self.handle_play_request(message, station)
 
     @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
-    def handle_latest_news(self, message=None, feed=None):
-        try:
-            self.stop()
-            station_url = None
-            self.now_playing = None
-            # Basic check for station title in utterance
-            # TODO - expand this - probably abstract from CPS Matching
-            if message and not feed:
-                for station in stations:
-                    if station.lower() in message.data["utterance"].lower():
-                        feed = station
-            if feed and feed in stations and feed != 'other':
-                selected_station = stations[feed]
-            else:
-                selected_station = self.get_default_station()
+    def handle_latest_news(self, message):
+        match = match_station_from_utterance(self, message.data['utterance'])
+        if match:
+            selected_station = match.station
+        else:
+            selected_station = self.get_default_station()
+        self.handle_play_request(message, selected_station)
 
-            # Speak intro while downloading in background
-            self.speak_dialog(
-                'news', data={"from": selected_station.full_name})
-            self._play_station(selected_station)
-            self.last_message = (True, message)
-            self.enable_intent('restart_playback')
-
-        except Exception as e:
-            self.log.error("Error: {0}".format(e))
-            self.log.info("Traceback: {}".format(traceback.format_exc()))
-            self.speak_dialog("could.not.start.the.news.feed")
+    def handle_play_request(self, message=None, station=None):
+        """Handle request to play a station."""
+        self.stop()
+        # Speak intro while downloading in background
+        self.speak_dialog('news', data={"from": station.full_name})
+        self._play_station(station)
+        self.last_message = (True, message)
+        self.enable_intent('restart_playback')
 
     def _play_station(self, station):
         """Play the given station using the most appropriate service."""
-        self.log.info(f'Playing News feed: {station.full_name}')
-        media_url = station.media_uri
-        self.log.info(f'News media url: {media_url}')
-        mime = find_mime_type(media_url)
-        # Ensure announcement of station has finished before playing
-        wait_while_speaking()
-        # If backend cannot handle https, download the file and provide a local stream.
-        if media_url[:8] == 'https://' and not self.is_https_supported():
-            self.download_media_file(media_url)
-            self.CPS_play((f"file://{self.STREAM}", mime))
-        else:
-            self.CPS_play((media_url, mime))
-        self.CPS_send_status(
-            # cast to str for json serialization
-            image=str(station.image_path),
-            artist=station.full_name
-        )
-        self.now_playing = station.full_name
+        try:
+            self.log.info(f'Playing News feed: {station.full_name}')
+            media_url = station.media_uri
+            self.log.info(f'News media url: {media_url}')
+            mime = find_mime_type(media_url)
+            # Ensure announcement of station has finished before playing
+            wait_while_speaking()
+            # If backend cannot handle https, download the file and provide a local stream.
+            if media_url[:8] == 'https://' and not self.is_https_supported():
+                self.download_media_file(media_url)
+                self.CPS_play((f"file://{self.STREAM}", mime))
+            else:
+                self.CPS_play((media_url, mime))
+            self.CPS_send_status(
+                # cast to str for json serialization
+                image=str(station.image_path),
+                artist=station.full_name
+            )
+            self.now_playing = station.full_name
+        except Exception as e:
+            self.speak_dialog("could.not.start.the.news.feed")
+            self.log.exception(e)
 
     def is_https_supported(self):
         """Check if any available audioservice backend supports https"""
@@ -262,6 +200,7 @@ class NewsSkill(CommonPlaySkill):
             self.handle_latest_news(self.last_message[1])
 
     def stop(self):
+        self.now_playing = None
         # Disable restarting when stopped
         if self.last_message:
             self.disable_intent('restart_playback')
