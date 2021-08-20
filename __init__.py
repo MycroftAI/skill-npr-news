@@ -385,7 +385,12 @@ class NewsSkill(CommonPlaySkill):
             wait_while_speaking()
             # Begin the news stream
             self.log.info('Feed: {}'.format(feed))
-            self.CPS_play(('file://' + self.STREAM, mime))
+            if self.gui.connected:
+                mime = "type/radio"
+                theme = dict(textColor="white", seekBackgroundColor="#BE1617", spectrumColor="#91D3F8", cardBackgroundColor="#5F0B0C")
+                self.CPS_play(('file://' + self.STREAM, mime, theme))
+            else:
+                self.CPS_play(('file://' + self.STREAM, mime))
             self.CPS_send_status(image=image or image_path('generic.png'),
                                  track=self.now_playing)
             self.last_message = (True, message)
