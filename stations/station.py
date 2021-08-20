@@ -15,21 +15,12 @@
 
 from abc import ABC, abstractproperty
 from builtins import property
-from enum import Enum, auto
 from pathlib import Path
 from collections.abc import Callable
 
 import feedparser
 
 from mycroft.util import LOG
-
-
-class FeedType(Enum):
-    """Define the types of news feeds that can exist"""
-    FILE_FETCHER = auto()
-    FILE = auto()
-    RSS = auto()
-    # STREAM = auto()
 
 
 class BaseStation(ABC):
