@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import date, datetime, timedelta
-import feedparser
 import os
-from os.path import join, abspath, dirname
-import re
 import requests
-from shutil import copyfile
 import subprocess
 import time
 import traceback
+from shutil import copyfile
 from urllib.parse import quote
-from pytz import timezone
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
@@ -31,110 +26,9 @@ from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
-from mycroft.util.time import now_local
 
-from .stations.abc import abc
-from .stations.ft import ft
+from .stations import stations
 
-
-def image_path(filename):
-    return 'file://' + join(dirname(abspath(__file__)), 'images', filename)
-
-
-def tsf():
-    """Custom inews fetcher for TSF news."""
-    feed = ('https://www.tsf.pt/stream/audio/{year}/{month:02d}/'
-            'noticias/{day:02d}/not{hour:02d}.mp3')
-    uri = None
-    i = 0
-    status = 404
-    date = now_local(timezone('Portugal'))
-    while status != 200 and i < 5:
-        date -= timedelta(hours=i)
-        uri = feed.format(hour=date.hour, year=date.year,
-                          month=date.month, day=date.day)
-        status = requests.get(uri).status_code
-        i += 1
-    if status != 200:
-        return None
-    return uri
-
-
-def gpb():
-    """Custom news fetcher for GPB news."""
-    feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
-    data = feedparser.parse(feed)
-    next_link = None
-    for entry in data['entries']:
-        # Find the first mp3 link with "GPB {time} Headlines" in title
-        if 'GPB' in entry['title'] and 'Headlines' in entry['title']:
-            next_link = entry['links'][0]['href']
-            break
-    html = requests.get(next_link)
-    # Find the first mp3 link
-    # Note that the latest mp3 may not be news,
-    # but could be an interview, etc.
-    mp3_find = re.search(r'href="(?P<mp3>.+\.mp3)"'.encode(), html.content)
-    if mp3_find is None:
-        return None
-    url = mp3_find.group('mp3').decode('utf-8')
-    return url
-
-
-"""Feed Tuple:
-    Key: Station acronym or short title
-    Tuple: (
-        Long title (String),
-        Feed url (String) or custom function name defined above,
-        image_path - for use on Mycroft GUI
-        )
-    NOTE - this list has to be in sync with the settingsmeta select options"""
-FEEDS = {
-    'other': ('Your custom feed', None, None),
-    'custom': ('Your custom feed', None, None),
-    'ABC': ('ABC News Australia', abc, image_path('ABC.png')),
-    'AP':  ('AP Hourly Radio News',
-            "https://www.spreaker.com/show/1401466/episodes/feed",
-            image_path('AP.png')),
-    'BBC': ('BBC News', 'https://podcasts.files.bbci.co.uk/p02nq0gn.rss',
-            image_path('BBC.png')),
-    'CBC': ('CBC News',
-            'https://www.cbc.ca/podcasting/includes/hourlynews.xml',
-            image_path('CBC.png')),
-    'DLF': ('DLF', 'https://www.deutschlandfunk.de/'
-                   'podcast-nachrichten.1257.de.podcast.xml',
-            image_path('DLF')),
-    'Ekot': ('Ekot', 'https://api.sr.se/api/rss/pod/3795',
-             image_path('Ekot.png')),
-    'FOX': ('Fox News', 'http://feeds.foxnewsradio.com/FoxNewsRadio',
-            image_path('FOX.png')),
-    'NPR': ('NPR News Now', 'https://www.npr.org/rss/podcast.php?id=500005',
-            image_path('NPR.png')),
-    'PBS': ('PBS NewsHour', 'https://www.pbs.org/newshour/feeds/'
-                            'rss/podcasts/show',
-            image_path('PBS.png')),
-    'VRT': ('VRT Nieuws', 'https://progressive-audio.lwc.vrtcdn.be/'
-                          'content/fixed/11_11niws-snip_hi.mp3',
-            None),
-    'WDR': ('WDR', 'https://www1.wdr.de/mediathek/audio/'
-                   'wdr-aktuell-news/wdr-aktuell-152.podcast',
-            image_path('WDR')),
-    'YLE': ('YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss',
-            image_path('Yle.png')),
-    "GPB": ("Georgia Public Radio", gpb, None),
-    "RDP": ("RDP Africa", "http://www.rtp.pt//play/itunes/5442", None),
-    "RNE": ("National Spanish Radio",
-            "http://api.rtve.es/api/programas/36019/audios.rs", None),
-    "TSF": ("TSF Radio", tsf, None),
-    "OE3": ("Ö3 Nachrichten",
-            "https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3",
-            None),
-    "FT": ("Financial Times", ft, image_path('FT.png')),
-}
-
-
-# If feed URL ends in specific filetype, just play it
-DIRECT_PLAY_FILETYPES = ['.mp3']
 
 # Minimum confidence levels
 CONF_EXACT_MATCH = 0.9
@@ -225,7 +119,7 @@ class NewsSkill(CommonPlaySkill):
             """
             phrase = phrase.lower().replace("play", "").strip()
             feed_short_name = feed.lower()
-            feed_long_name = FEEDS[feed][0].lower()
+            feed_long_name = stations[feed].full_name.lower()
             short_name_confidence = fuzzy_match(phrase, feed_short_name)
             long_name_confidence = fuzzy_match(phrase, feed_long_name)
             # Test with "News" added in case user only says acronym eg "ABC".
@@ -240,7 +134,7 @@ class NewsSkill(CommonPlaySkill):
             return feed, conf
 
         # Check primary feed list for matches eg 'ABC'
-        for feed in FEEDS:
+        for feed in stations.values():
             feed, conf = match_feed_name(search_phrase, feed)
             if conf > matched_feed['conf']:
                 matched_feed['conf'] = conf
@@ -258,7 +152,7 @@ class NewsSkill(CommonPlaySkill):
             matched_feed = {'key': self.get_default_station(),
                             'conf': CONF_GENERIC_MATCH}
 
-        feed_title = FEEDS[matched_feed['key']][0]
+        feed_title = stations[matched_feed['key']].full_name
         if matched_feed['conf'] >= CONF_EXACT_MATCH:
             match_level = CPSMatchLevel.EXACT
         elif matched_feed['conf'] >= CONF_LIKELY_MATCH:
@@ -297,42 +191,17 @@ class NewsSkill(CommonPlaySkill):
         """
         feed_code = self.settings.get("station", "not_set")
         station_url = self.settings.get("custom_url", "")
-        if feed_code in FEEDS:
-            title, station_url, image = FEEDS[feed_code]
-        elif len(station_url) > 0:
-            title = FEEDS["custom"][0]
-            image = None
+        if feed_code in stations.keys():
+            station = stations[feed_code]
+        # TODO Fix fallback to custom default
+        # elif len(station_url) > 0:
+        #     title = stations["custom"][0]
+        #     image = None
         else:
             feed_code = self.get_default_station()
-            title, station_url, image = FEEDS[feed_code]
+            station = stations[feed_code]
 
-        return title, station_url, image
-
-    def get_media_url(self, station_url):
-        if callable(station_url):
-            return station_url()
-
-        # If link is an audio file, just play it.
-        if station_url and station_url[-4:] in DIRECT_PLAY_FILETYPES:
-            self.log.debug('Playing news from URL: {}'.format(station_url))
-            return station_url
-
-        # Otherwise it is an RSS or XML feed
-        data = feedparser.parse(station_url.strip())
-        # After the intro, find and start the news stream
-        # select the first link to an audio file
-        for link in data['entries'][0]['links']:
-            if 'audio' in link['type']:
-                media_url = link['href']
-                break
-            else:
-                # fall back to using the first link in the entry
-                media_url = data['entries'][0]['links'][0]['href']
-        self.log.debug('Playing news from URL: {}'.format(media_url))
-        # TODO - check on temporary workaround and remove - see issue #87
-        if station_url.startswith('https://www.npr.org/'):
-            media_url = media_url.split('?')[0]
-        return media_url
+        return station
 
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
@@ -355,17 +224,17 @@ class NewsSkill(CommonPlaySkill):
             # Basic check for station title in utterance
             # TODO - expand this - probably abstract from CPS Matching
             if message and not feed:
-                for f in FEEDS:
-                    if f.lower() in message.data["utterance"].lower():
-                        feed = f
-            if feed and feed in FEEDS and feed != 'other':
-                station_title, station_url, station_image = FEEDS[feed]
+                for station in stations:
+                    if station.lower() in message.data["utterance"].lower():
+                        feed = station
+            if feed and feed in stations and feed != 'other':
+                selected_station = stations[feed]
             else:
-                station_title, station_url, station_image = self.get_station()
+                selected_station = self.get_station()
 
             # Speak intro while downloading in background
-            self.speak_dialog('news', data={"from": station_title})
-            self._play_station(station_title, station_url, station_image)
+            self.speak_dialog('news', data={"from": selected_station.full_name})
+            self._play_station(selected_station)
             self.last_message = (True, message)
             self.enable_intent('restart_playback')
 
@@ -374,11 +243,11 @@ class NewsSkill(CommonPlaySkill):
             self.log.info("Traceback: {}".format(traceback.format_exc()))
             self.speak_dialog("could.not.start.the.news.feed")
 
-    def _play_station(self, station_title, station_url, station_image):
+    def _play_station(self, station):
         """Play the given station using the most appropriate service."""
         # TODO convert all station references to named tuples.
-        self.log.info(f'Playing News feed: {station_title}')
-        media_url = self.get_media_url(station_url)
+        self.log.info(f'Playing News feed: {station.full_name}')
+        media_url = station.media_uri
         self.log.info(f'News media url: {media_url}')
         mime = find_mime(media_url)
         # Ensure announcement of station has finished before playing
@@ -390,10 +259,10 @@ class NewsSkill(CommonPlaySkill):
         else:
             self.CPS_play((media_url, mime))
         self.CPS_send_status(
-            image=station_image or image_path('generic.png'),
-            artist=station_title
+            image=str(station.image_path),  # cast to str for json serialization
+            artist=station.full_name
         )
-        self.now_playing = station_title
+        self.now_playing = station.full_name
 
     def is_https_supported(self):
         """Check if any available audioservice backend supports https"""

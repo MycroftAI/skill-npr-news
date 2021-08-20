@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from urllib.request import urlopen
 
 
-def ft():
+def get_ft_url():
     """Custom news fetcher for today's FT news briefing"""
     url = 'https://www.ft.com/newsbriefing'
     page = urlopen(url)
