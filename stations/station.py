@@ -40,6 +40,13 @@ class BaseStation(ABC):
         self.full_name = full_name
         self.image_file = image_file
 
+    def as_dict(self):
+        return {
+            'acronym': self.acronym,
+            'full_name': self.full_name,
+            'image_path': str(self.image_path),
+        }
+
     @property
     def image_path(self) -> Path:
         """The absolute path to the stations logo.
