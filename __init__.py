@@ -13,11 +13,9 @@
 # limitations under the License.
 
 import os
-import requests
 import subprocess
 import time
 import traceback
-from shutil import copyfile
 from urllib.parse import quote
 
 from adapt.intent import IntentBuilder
@@ -28,49 +26,13 @@ from mycroft.util import get_cache_directory, LOG
 from mycroft.util.parse import fuzzy_match
 
 from .stations import stations
+from .util import contains_html, find_mime_type
 
 
 # Minimum confidence levels
 CONF_EXACT_MATCH = 0.9
 CONF_LIKELY_MATCH = 0.7
 CONF_GENERIC_MATCH = 0.6
-
-
-def find_mime(url):
-    mime = 'audio/mpeg'
-    response = requests.Session().head(url, allow_redirects=True)
-    if 200 <= response.status_code < 300:
-        mime = response.headers['content-type']
-    return mime
-
-
-def contains_html(file):
-    """Reads file and reports if a <html> tag is contained.
-
-    Makes a temporary copy of the file to prevent locking downloads in
-    progress. This should not be considered a robust method of testing if a
-    file is a HTML document, but sufficient for this purpose.
-
-    Args:
-        file (str): path of file
-
-    Returns:
-        bool: whether a <html> tag was found
-    """
-    found_html = False
-    tmp_file = '/tmp/mycroft-news-html-check'
-    try:
-        # Copy file to prevent locking larger file being downloaded
-        copyfile(file, tmp_file)
-        with open(tmp_file, mode='r', encoding="utf-8") as f:
-            for line in f:
-                if '<html>' in line:
-                    found_html = True
-                    break
-    except Exception:
-        LOG.debug('Could not parse file, assumed not to be HTML.')
-    return found_html
-
 
 class NewsSkill(CommonPlaySkill):
     def __init__(self):
@@ -249,7 +211,7 @@ class NewsSkill(CommonPlaySkill):
         self.log.info(f'Playing News feed: {station.full_name}')
         media_url = station.media_uri
         self.log.info(f'News media url: {media_url}')
-        mime = find_mime(media_url)
+        mime = find_mime_type(media_url)
         # Ensure announcement of station has finished before playing
         wait_while_speaking()
         # If backend cannot handle https, download the file and provide a local stream.
