@@ -19,7 +19,9 @@ from pytz import timezone
 from mycroft.util.time import now_local
 
 def get_tsf_url():
-    """Custom inews fetcher for TSF news."""
+    """Custom inews fetcher for TSF news.
+    
+    Constructs url using standard format with current date and time."""
     feed = ('https://www.tsf.pt/stream/audio/{year}/{month:02d}/'
             'noticias/{day:02d}/not{hour:02d}.mp3')
     uri = None

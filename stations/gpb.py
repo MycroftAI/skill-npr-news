@@ -17,7 +17,10 @@ import re
 import requests
 
 def get_gpb_url():
-    """Custom news fetcher for GPB news."""
+    """Custom news fetcher for GPB news.
+    
+    Uses an RSS feed with a mixture of content. This fetches the latest 
+    headlines episode."""
     feed = 'http://feeds.feedburner.com/gpbnews/GeorgiaRSS?format=xml'
     data = feedparser.parse(feed)
     next_link = None
