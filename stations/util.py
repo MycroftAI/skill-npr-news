@@ -17,6 +17,7 @@ from shutil import copyfile
 
 from mycroft.util import LOG
 
+
 def find_mime_type(url: str) -> str:
     """Determine the mime type of a file at the given url.
 
