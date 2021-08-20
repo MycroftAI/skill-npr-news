@@ -158,7 +158,7 @@ class NewsSkill(CommonPlaySkill):
             # Ensure announcement of station has finished before playing
             wait_while_speaking()
             # If backend cannot handle https, download the file and provide a local stream.
-            if media_url[:8] == 'https://' and not self.is_https_supported():
+            if media_url[:8] == 'https://' and not self.is_https_supported:
                 self.download_media_file(media_url)
                 self.CPS_play((f"file://{self.STREAM}", mime))
             else:
@@ -173,9 +173,10 @@ class NewsSkill(CommonPlaySkill):
             self.speak_dialog("could.not.start.the.news.feed")
             self.log.exception(e)
 
+    @property
     def is_https_supported(self):
         """Check if any available audioservice backend supports https"""
-        for name, service in self.audioservice.available_backends().items():
+        for service in self.audioservice.available_backends().values():
             if 'https' in service['supported_uris']:
                 return True
         return False
