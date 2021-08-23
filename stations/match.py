@@ -27,29 +27,42 @@ CONF_GENERIC_MATCH = 0.6
 Match = namedtuple('Match', 'station confidence')
 
 
-def match_station_name(phrase, station, news_keyword):
+def match_station_name(phrase, station, aliases, news_keyword):
     """Determine confidence that a phrase requested a given station.
 
     Args:
         phrase (str): utterance from the user
-        feed (str): the station feed to match against
+        station (str): the station feed to match against
+        aliases (list[str]): alternative names for the station
+        news_keyword (str): localized keyword for "news"
 
     Returns:
-        tuple: feed being matched, confidence level
+        tuple: feed being matched, highest confidence level found
     """
     phrase = phrase.lower().replace("play", "").strip()
     station_acronym = station.acronym.lower()
-    short_name_confidence = fuzzy_match(phrase, station_acronym)
-    long_name_confidence = fuzzy_match(phrase, station.full_name.lower())
     # Test with "News" added in case user only says acronym eg "ABC".
     # As it is short it may not provide a high match confidence.
     modified_short_name = "{} {}".format(station_acronym, news_keyword)
-    variation_confidence = fuzzy_match(phrase, modified_short_name)
-    key_confidence = CONF_GENERIC_MATCH if news_keyword in phrase and station_acronym in phrase else 0.0
 
-    conf = max((short_name_confidence, long_name_confidence,
-                variation_confidence, key_confidence))
-    return Match(station, conf)
+    match_confidences = [
+        fuzzy_match(phrase, station_acronym),
+        fuzzy_match(phrase, station.full_name.lower()),
+        fuzzy_match(phrase, modified_short_name),
+    ]
+
+    # Check aliases defined in alt.feed.name.value
+    if aliases:
+        match_confidences += [fuzzy_match(phrase, alias) for alias in aliases]
+
+    # If phrase contains both the news keyword and the station name ensure a
+    # minimum confidence of a generic match.
+    if news_keyword in phrase:
+        if station_acronym in phrase:
+            match_confidences.append(CONF_GENERIC_MATCH)
+
+    highest_confidence = max(match_confidences)
+    return Match(station, highest_confidence)
 
 
 def match_station_from_utterance(skill, utterance):
@@ -75,18 +88,12 @@ def match_station_from_utterance(skill, utterance):
         station = skill.get_default_station()
         match = Match(station, 1.0)
 
-    # Check primary feed list for matches eg 'ABC'
+    # Test against each station to find the best match.
     news_keyword = skill.translate('OnlyNews').lower()
     for station in stations.values():
-        station_match = match_station_name(utterance, station, news_keyword)
+        aliases = skill.alternate_station_names.get(station.acronym)
+        station_match = match_station_name(utterance, station, aliases, news_keyword)
         if station_match.confidence > match.confidence:
             match = station_match
-
-    # Check list of alternate names eg 'associated press' => 'AP'
-    for name in skill.alt_feed_names:
-        conf = fuzzy_match(utterance, name)
-        if conf > match.confidence:
-            station = stations[skill.alt_feed_names[name]]
-            match = Match(station, conf)
 
     return match
