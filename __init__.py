@@ -151,6 +151,10 @@ class NewsSkill(CommonPlaySkill):
         1. Station object passed directly to the method.
         2. Station requested by a user utterance.
         3. Default station for this device.
+
+        Args:
+            message (Message): [optional] Message object containing an utterance
+            station (Station): Instance of a Station to be played
         """
         if not station:
             match = match_station_from_utterance(self, message.data.get('utterance'))
@@ -166,7 +170,11 @@ class NewsSkill(CommonPlaySkill):
         self.enable_intent('restart_playback')
 
     def _play_station(self, station):
-        """Play the given station using the most appropriate service."""
+        """Play the given station using the most appropriate service.
+        
+        Args: 
+            station (Station): Instance of a Station to be played
+        """
         try:
             self.log.info(f'Playing News feed: {station.full_name}')
             media_url = station.media_uri
@@ -199,7 +207,11 @@ class NewsSkill(CommonPlaySkill):
         return False
 
     def download_media_file(self, url):
-        """Download a media file and return path to the stream"""
+        """Download a media file and return path to the stream.
+        
+        Args:
+            url (str): media file to download
+        """
         # (Re)create Fifo
         if os.path.exists(self.STREAM):
             os.remove(self.STREAM)
