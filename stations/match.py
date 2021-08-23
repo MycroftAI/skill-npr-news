@@ -59,6 +59,8 @@ def match_station_from_utterance(skill, utterance):
         Station or None if news not requested.
     """
     match = Match(None, 0.0)
+    if utterance is None:
+        return match
 
     # Remove articles like "the" as it matches too well will "other"
     search_phrase = utterance.lower().replace('the', '').strip()
