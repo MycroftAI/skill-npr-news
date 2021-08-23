@@ -49,7 +49,7 @@ class NewsSkill(CommonPlaySkill):
         # Default feed per country code, if user has not selected a default
         self.default_feed = self.translate_namedvalues('country.default')
         # Longer titles or alternative common names of feeds for searching
-        self.alt_feed_names = self.translate_namedvalues('alt.feed.name')
+        self.alternate_station_names = self.load_alternate_station_names()
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
 
@@ -60,6 +60,22 @@ class NewsSkill(CommonPlaySkill):
         if station_code == "not_set" and len(custom_url) > 0:
             self.log.info("Creating custom News Station from Skill settings.")
             set_custom_station(custom_url)
+
+    def load_alternate_station_names(self):
+        """Load the list of alternate station names from alt.feed.name.value
+
+        These are provided as name, acronym pairs. They are reordered into a
+        dict keyed by acronym for ease of use in station matching.
+        """
+        loaded_list = self.translate_namedvalues('alt.feed.name')
+        alternate_station_names = {}
+        for name in loaded_list:
+            acronym = loaded_list[name]
+            if alternate_station_names.get(acronym) is None:
+                alternate_station_names[acronym] = []
+            alternate_station_names[acronym].append(name)
+        return alternate_station_names
+
         
     def CPS_start(self, phrase, data):
         if data and data.get('acronym'):
