@@ -40,7 +40,6 @@ class NewsSkill(CommonPlaySkill):
         self.now_playing = None
         self.last_message = None
         self.curl = None
-        self.STREAM = '{}/stream'.format(get_cache_directory('NewsSkill'))
 
     def initialize(self):
         time.sleep(1)
@@ -184,8 +183,8 @@ class NewsSkill(CommonPlaySkill):
             wait_while_speaking()
             # If backend cannot handle https, download the file and provide a local stream.
             if media_url[:8] == 'https://' and not self.is_https_supported:
-                self.download_media_file(media_url)
-                self.CPS_play((f"file://{self.STREAM}", mime))
+                stream = self.download_media_file(media_url)
+                self.CPS_play((f"file://{stream}", mime))
             else:
                 self.CPS_play((media_url, mime))
             self.CPS_send_status(
@@ -194,7 +193,7 @@ class NewsSkill(CommonPlaySkill):
                 artist=station.full_name
             )
             self.now_playing = station.full_name
-        except Exception as e:
+        except ValueError as e:
             self.speak_dialog("could.not.start.the.news.feed")
             self.log.exception(e)
 
@@ -211,17 +210,25 @@ class NewsSkill(CommonPlaySkill):
         
         Args:
             url (str): media file to download
+
+        Returns:
+            stream (str): file path of the audio stream
+
+        Raises:
+            ValueError if url does not provide a valid audio file
         """
+        stream = '{}/stream'.format(get_cache_directory('NewsSkill'))
         # (Re)create Fifo
-        if os.path.exists(self.STREAM):
-            os.remove(self.STREAM)
-        os.mkfifo(self.STREAM)
+        if os.path.exists(stream):
+            os.remove(stream)
+        os.mkfifo(stream)
         self.log.debug('Running curl {}'.format(url))
-        args = ['curl', '-L', quote(url, safe=":/"), '-o', self.STREAM]
+        args = ['curl', '-L', quote(url, safe=":/"), '-o', stream]
         self.curl = subprocess.Popen(args)
         # Check if downloaded file is actually an error page
-        if contains_html(self.STREAM):
-            raise Exception('Could not fetch valid audio file.')
+        if contains_html(stream):
+            raise ValueError('Could not fetch valid audio file.')
+        return stream
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):

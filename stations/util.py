@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import requests
-from shutil import copyfile
+from shutil import copyfile, SpecialFileError
 
 from mycroft.util import LOG
 
@@ -56,6 +56,7 @@ def contains_html(file: str) -> bool:
                 if '<html>' in line:
                     found_html = True
                     break
-    except Exception:
-        LOG.error('Could not parse file, assumed not to be HTML.')
+    except SpecialFileError as error:
+        if 'is a named pipe' in error.args[0]:
+            LOG.debug('File is a "named pipe" as expected.')
     return found_html
