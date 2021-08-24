@@ -52,14 +52,6 @@ class NewsSkill(CommonPlaySkill):
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
 
-    def on_websettings_changed(self):
-        """Callback triggered anytime Skill settings are modified on backend."""
-        station_code = self.settings.get("station", "not_set")
-        custom_url = self.settings.get("custom_url")
-        if station_code == "not_set" and len(custom_url) > 0:
-            self.log.info("Creating custom News Station from Skill settings.")
-            set_custom_station(custom_url)
-
     def load_alternate_station_names(self):
         """Load the list of alternate station names from alt.feed.name.value
 
@@ -75,7 +67,30 @@ class NewsSkill(CommonPlaySkill):
             alternate_station_names[acronym].append(name)
         return alternate_station_names
 
-        
+    def on_websettings_changed(self):
+        """Callback triggered anytime Skill settings are modified on backend."""
+        station_code = self.settings.get("station", "not_set")
+        custom_url = self.settings.get("custom_url")
+        if station_code == "not_set" and len(custom_url) > 0:
+            self.log.info("Creating custom News Station from Skill settings.")
+            set_custom_station(custom_url)
+
+    @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
+    def handle_latest_news(self, message):
+        """Adapt intent handler to capture general queries for the latest news."""
+        self.handle_play_request(message)
+
+    @intent_file_handler("PlayTheNews.intent")
+    def handle_latest_news_alt(self, message):
+        """Padatious intent handler to capture short distinct utterances."""
+        self.handle_play_request(message)
+
+    @intent_handler(IntentBuilder('').require('Restart'))
+    def restart_playback(self, message):
+        self.log.debug('Restarting last message')
+        if self.last_message:
+            self.handle_latest_news(self.last_message[1])
+
     def CPS_start(self, phrase, data):
         if data and data.get('acronym'):
             # Play the requested news service
@@ -106,6 +121,31 @@ class NewsSkill(CommonPlaySkill):
             
         return (match.station.full_name, match_level, match.station.as_dict())
 
+    def download_media_file(self, url):
+        """Download a media file and return path to the stream.
+        
+        Args:
+            url (str): media file to download
+
+        Returns:
+            stream (str): file path of the audio stream
+
+        Raises:
+            ValueError if url does not provide a valid audio file
+        """
+        stream = '{}/stream'.format(get_cache_directory('NewsSkill'))
+        # (Re)create Fifo
+        if os.path.exists(stream):
+            os.remove(stream)
+        os.mkfifo(stream)
+        self.log.debug('Running curl {}'.format(url))
+        args = ['curl', '-L', quote(url, safe=":/"), '-o', stream]
+        self.curl = subprocess.Popen(args)
+        # Check if downloaded file is actually an error page
+        if contains_html(stream):
+            raise ValueError('Could not fetch valid audio file.')
+        return stream
+
     def get_default_station(self):
         """Get default station for user.
 
@@ -133,16 +173,6 @@ class NewsSkill(CommonPlaySkill):
         station_code = self.default_feed.get(country_code)
         return stations.get(station_code)
 
-    @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
-    def handle_latest_news(self, message):
-        """Adapt intent handler to capture general queries for the latest news."""
-        self.handle_play_request(message)
-
-    @intent_file_handler("PlayTheNews.intent")
-    def handle_latest_news_alt(self, message):
-        """Padatious intent handler to capture short distinct utterances."""
-        self.handle_play_request(message)
-
     def handle_play_request(self, message=None, station=None):
         """Handle request to play a station.
 
@@ -167,6 +197,14 @@ class NewsSkill(CommonPlaySkill):
         self._play_station(station)
         self.last_message = (True, message)
         self.enable_intent('restart_playback')
+
+    @property
+    def is_https_supported(self):
+        """Check if any available audioservice backend supports https"""
+        for service in self.audioservice.available_backends().values():
+            if 'https' in service['supported_uris']:
+                return True
+        return False
 
     def _play_station(self, station):
         """Play the given station using the most appropriate service.
@@ -196,45 +234,6 @@ class NewsSkill(CommonPlaySkill):
         except ValueError as e:
             self.speak_dialog("could.not.start.the.news.feed")
             self.log.exception(e)
-
-    @property
-    def is_https_supported(self):
-        """Check if any available audioservice backend supports https"""
-        for service in self.audioservice.available_backends().values():
-            if 'https' in service['supported_uris']:
-                return True
-        return False
-
-    def download_media_file(self, url):
-        """Download a media file and return path to the stream.
-        
-        Args:
-            url (str): media file to download
-
-        Returns:
-            stream (str): file path of the audio stream
-
-        Raises:
-            ValueError if url does not provide a valid audio file
-        """
-        stream = '{}/stream'.format(get_cache_directory('NewsSkill'))
-        # (Re)create Fifo
-        if os.path.exists(stream):
-            os.remove(stream)
-        os.mkfifo(stream)
-        self.log.debug('Running curl {}'.format(url))
-        args = ['curl', '-L', quote(url, safe=":/"), '-o', stream]
-        self.curl = subprocess.Popen(args)
-        # Check if downloaded file is actually an error page
-        if contains_html(stream):
-            raise ValueError('Could not fetch valid audio file.')
-        return stream
-
-    @intent_handler(IntentBuilder('').require('Restart'))
-    def restart_playback(self, message):
-        self.log.debug('Restarting last message')
-        if self.last_message:
-            self.handle_latest_news(self.last_message[1])
 
     def stop_curl_process(self):
         """Stop any running curl download process."""
