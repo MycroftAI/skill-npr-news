@@ -19,12 +19,14 @@ from urllib.parse import quote
 
 from adapt.intent import IntentBuilder
 from mycroft.audio import wait_while_speaking
+from mycroft.messagebus import Message
 from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
 from .stations import set_custom_station, stations
 from .stations.match import match_station_from_utterance, Match
+from .stations.station import BaseStation
 from .stations.util import contains_html, find_mime_type
 
 
@@ -52,11 +54,16 @@ class NewsSkill(CommonPlaySkill):
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
 
-    def load_alternate_station_names(self):
+    def load_alternate_station_names(self) -> dict:
         """Load the list of alternate station names from alt.feed.name.value
 
         These are provided as name, acronym pairs. They are reordered into a
         dict keyed by acronym for ease of use in station matching.
+
+        Returns:
+            Dict of alternative names for stations
+                Keys: station acronym
+                Values: list of alternative names
         """
         loaded_list = self.translate_namedvalues('alt.feed.name')
         alternate_station_names = {}
@@ -91,7 +98,8 @@ class NewsSkill(CommonPlaySkill):
         if self.last_message:
             self.handle_latest_news(self.last_message[1])
 
-    def CPS_start(self, phrase, data):
+    def CPS_start(self, _, data):
+        """Handle request from Common Play System to start playback."""
         if data and data.get('acronym'):
             # Play the requested news service
             selected_station = stations[data['acronym']]
@@ -100,9 +108,15 @@ class NewsSkill(CommonPlaySkill):
             selected_station = self.get_default_station()
         self.handle_play_request(station=selected_station)
         
+    def CPS_match_query_phrase(self, phrase: str) -> tuple((str, float, dict)):
+        """Respond to Common Play Service query requests.
+        
+        Args:
+            phrase: utterance request to parse
 
-    def CPS_match_query_phrase(self, phrase):
-        """Respond to Common Play Service query requests."""
+        Returns:
+            Tuple(Name of station, confidence, Station information)
+        """
         match = match_station_from_utterance(self, phrase)
         
         # If no match but utterance contains news, return low confidence level
@@ -121,7 +135,7 @@ class NewsSkill(CommonPlaySkill):
             
         return (match.station.full_name, match_level, match.station.as_dict())
 
-    def download_media_file(self, url):
+    def download_media_file(self, url: str) -> str:
         """Download a media file and return path to the stream.
         
         Args:
@@ -146,7 +160,7 @@ class NewsSkill(CommonPlaySkill):
             raise ValueError('Could not fetch valid audio file.')
         return stream
 
-    def get_default_station(self):
+    def get_default_station(self) -> BaseStation:
         """Get default station for user.
 
         Fallback order:
@@ -167,13 +181,13 @@ class NewsSkill(CommonPlaySkill):
             station = stations['NPR']
         return station
 
-    def get_default_station_by_country(self):
+    def get_default_station_by_country(self) -> BaseStation:
         """Get the default station based on the devices location."""
         country_code = self.location['city']['state']['country']['code']
         station_code = self.default_feed.get(country_code)
         return stations.get(station_code)
 
-    def handle_play_request(self, message=None, station=None):
+    def handle_play_request(self, message: Message = None, station: BaseStation = None):
         """Handle request to play a station.
 
         Station preference will be:
@@ -182,8 +196,8 @@ class NewsSkill(CommonPlaySkill):
         3. Default station for this device.
 
         Args:
-            message (Message): [optional] Message object containing an utterance
-            station (Station): Instance of a Station to be played
+            message: [optional] Message object containing an utterance
+            station: [optional] Instance of a Station to be played
         """
         if not station:
             match = match_station_from_utterance(self, message.data.get('utterance'))
@@ -199,14 +213,14 @@ class NewsSkill(CommonPlaySkill):
         self.enable_intent('restart_playback')
 
     @property
-    def is_https_supported(self):
-        """Check if any available audioservice backend supports https"""
+    def is_https_supported(self) -> bool:
+        """Check if any available audioservice backend supports https."""
         for service in self.audioservice.available_backends().values():
             if 'https' in service['supported_uris']:
                 return True
         return False
 
-    def _play_station(self, station):
+    def _play_station(self, station: BaseStation):
         """Play the given station using the most appropriate service.
         
         Args: 
@@ -253,7 +267,7 @@ class NewsSkill(CommonPlaySkill):
             finally:
                 self.curl = None
 
-    def stop(self):
+    def stop(self) -> bool:
         """Respond to system stop commands."""
         if self.now_playing is None:
             return False
