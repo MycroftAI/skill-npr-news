@@ -236,7 +236,28 @@ class NewsSkill(CommonPlaySkill):
         if self.last_message:
             self.handle_latest_news(self.last_message[1])
 
+    def stop_curl_process(self):
+        """Stop any running curl download process."""
+        if self.curl:
+            try:
+                self.curl.terminate()
+                self.curl.communicate()
+                # Check if process has completed
+                return_code = self.curl.poll()
+                if return_code is None:
+                    # Process must still be running...
+                    self.curl.kill()
+                else:
+                    self.log.debug(f'Curl return code: {return_code}')
+            except subprocess.SubprocessError as e:
+                self.log.exception(f'Could not stop curl: {repr(e)}')
+            finally:
+                self.curl = None
+
     def stop(self):
+        """Respond to system stop commands."""
+        if self.now_playing is None:
+            return False
         self.now_playing = None
         # Disable restarting when stopped
         if self.last_message:
@@ -244,16 +265,9 @@ class NewsSkill(CommonPlaySkill):
             self.last_message = None
 
         # Stop download process if it's running.
-        if self.curl:
-            try:
-                self.curl.kill()
-                self.curl.communicate()
-            except Exception as e:
-                self.log.error('Could not stop curl: {}'.format(repr(e)))
-            finally:
-                self.curl = None
-            self.CPS_send_status()
-            return True
+        self.stop_curl_process()
+        self.CPS_send_status()
+        return True
 
 
 def create_skill():
