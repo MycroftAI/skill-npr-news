@@ -77,7 +77,7 @@ class NewsSkill(CommonPlaySkill):
     def on_websettings_changed(self):
         """Callback triggered anytime Skill settings are modified on backend."""
         station_code = self.settings.get("station", "not_set")
-        custom_url = self.settings.get("custom_url")
+        custom_url = self.settings.get("custom_url", "")
         if station_code == "not_set" and len(custom_url) > 0:
             self.log.info("Creating custom News Station from Skill settings.")
             set_custom_station(custom_url)
