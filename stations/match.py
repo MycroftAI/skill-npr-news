@@ -57,7 +57,7 @@ def match_station_name(phrase, station, aliases, news_keyword):
     if f"{station.acronym.lower()} {news_keyword}" in phrase:
         # Eg "play DLF News"
         match_confidences.append(CONF_HIGH_MATCH)
-    if station.acronym.lower() in phrase:
+    elif station.acronym.lower() in phrase:
         if news_keyword in phrase:
             # Eg "what's the news on DLF"
             match_confidences.append(CONF_LIKELY_MATCH)
