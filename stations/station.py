@@ -151,7 +151,12 @@ def create_custom_station(station_url):
     stations['custom'] = clazz('custom', 'Your custom station', station_url)
 
 
-# NOTE: This list has to be in sync with the settingsmeta select options.
+# NOTE: This list should be kept in sync with the settingsmeta select options,
+# however modifying that file will cause the backend to consider it as a new
+# group of settings. Until there is a better mechanism for handling updated
+# settingsmeta files, we will not be adding new stations to the settings.
+# They can be added to the list of country defaults below.
+
 stations = dict(
     ABC=FetcherStation('ABC', 'ABC News Australia', get_abc_url, 'ABC.png'),
     AP=RSSStation('AP', 'AP Hourly Radio News',
@@ -185,4 +190,18 @@ stations = dict(
         'WDR', 'WDR', 'https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast', 'WDR.png'),
     YLE=RSSStation(
         'YLE', 'YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss', 'Yle.png'),
+)
+
+country_defaults = dict(
+    AT='OE3',
+    AU='ABC',
+    BE='VRT',
+    CA='CBC',
+    DE='DLF',
+    ES='RNE',
+    FI='YLE',
+    PT='TSF',
+    SE='Ekot',
+    UK='BBC',
+    US='NPR',
 )

@@ -23,7 +23,7 @@ from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
 from .stations.match import match_station_from_utterance, Match
-from .stations.station import create_custom_station, BaseStation, stations
+from .stations.station import create_custom_station, BaseStation, country_defaults, stations
 from .stations.util import contains_html, find_mime_type
 
 
@@ -44,8 +44,6 @@ class NewsSkill(CommonPlaySkill):
         time.sleep(1)
         self.log.debug('Disabling restart intent')
         self.disable_intent('restart_playback')
-        # Default feed per country code, if user has not selected a default
-        self.default_feed = self.translate_namedvalues('country.default')
         # Longer titles or alternative common names of feeds for searching
         self.alternate_station_names = self.load_alternate_station_names()
         self.settings_change_callback = self.on_websettings_changed
@@ -194,7 +192,7 @@ class NewsSkill(CommonPlaySkill):
     def get_default_station_by_country(self) -> BaseStation:
         """Get the default station based on the devices location."""
         country_code = self.location['city']['state']['country']['code']
-        station_code = self.default_feed.get(country_code)
+        station_code = country_defaults.get(country_code)
         return stations.get(station_code)
 
     def handle_play_request(self, station: BaseStation = None):
