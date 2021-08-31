@@ -17,10 +17,8 @@ import subprocess
 import time
 from urllib.parse import quote
 
-from adapt.intent import IntentBuilder
+from mycroft import intent_handler, AdaptIntent
 from mycroft.audio import wait_while_speaking
-from mycroft.messagebus import Message
-from mycroft.skills.core import intent_handler, intent_file_handler
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
@@ -82,7 +80,7 @@ class NewsSkill(CommonPlaySkill):
             self.log.info("Creating custom News Station from Skill settings.")
             add_custom_station(custom_url)
 
-    @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
+    @intent_handler(AdaptIntent("").one_of("Give", "Latest").require("News"))
     def handle_latest_news(self, message):
         """Adapt intent handler to capture general queries for the latest news."""
         match = match_station_from_utterance(self, message.data['utterance'])
@@ -92,7 +90,7 @@ class NewsSkill(CommonPlaySkill):
             station = self.get_default_station()
         self.handle_play_request(station)
 
-    @intent_file_handler("PlayTheNews.intent")
+    @intent_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         """Padatious intent handler to capture short distinct utterances."""
         match = match_station_from_utterance(self, message.data['utterance'])
@@ -102,7 +100,7 @@ class NewsSkill(CommonPlaySkill):
             station = self.get_default_station()
         self.handle_play_request(station)
 
-    @intent_handler(IntentBuilder('').require('Restart'))
+    @intent_handler(AdaptIntent('').require('Restart'))
     def restart_playback(self, message):
         self.log.info('Restarting last station to be played')
         if self.last_station_played:
