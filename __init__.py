@@ -85,12 +85,22 @@ class NewsSkill(CommonPlaySkill):
     @intent_handler(IntentBuilder("").one_of("Give", "Latest").require("News"))
     def handle_latest_news(self, message):
         """Adapt intent handler to capture general queries for the latest news."""
-        self.handle_play_request(message)
+        match = match_station_from_utterance(self, message.data['utterance'])
+        if match and match.station:
+            station = match.station
+        else:
+            station = self.get_default_station()
+        self.handle_play_request(station)
 
     @intent_file_handler("PlayTheNews.intent")
     def handle_latest_news_alt(self, message):
         """Padatious intent handler to capture short distinct utterances."""
-        self.handle_play_request(message)
+        match = match_station_from_utterance(self, message.data['utterance'])
+        if match and match.station:
+            station = match.station
+        else:
+            station = self.get_default_station()
+        self.handle_play_request(station)
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):
@@ -106,7 +116,7 @@ class NewsSkill(CommonPlaySkill):
         else:
             # Just use the default news feed
             selected_station = self.get_default_station()
-        self.handle_play_request(station=selected_station)
+        self.handle_play_request(selected_station)
         
     def CPS_match_query_phrase(self, phrase: str) -> tuple((str, float, dict)):
         """Respond to Common Play Service query requests.
@@ -187,24 +197,12 @@ class NewsSkill(CommonPlaySkill):
         station_code = self.default_feed.get(country_code)
         return stations.get(station_code)
 
-    def handle_play_request(self, message: Message = None, station: BaseStation = None):
+    def handle_play_request(self, station: BaseStation = None):
         """Handle request to play a station.
 
-        Station preference will be:
-        1. Station object passed directly to the method.
-        2. Station requested by a user utterance.
-        3. Default station for this device.
-
         Args:
-            message: [optional] Message object containing an utterance
-            station: [optional] Instance of a Station to be played
+            station: Instance of a Station to be played
         """
-        if not station:
-            match = match_station_from_utterance(self, message.data.get('utterance'))
-            if match and match.station:
-                station = match.station
-            else:
-                station = self.get_default_station()
         self.stop()
         # Speak intro while downloading in background
         self.speak_dialog('news', data={"from": station.full_name})
