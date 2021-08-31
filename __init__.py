@@ -124,7 +124,7 @@ class NewsSkill(CommonPlaySkill):
         Returns:
             Tuple(Name of station, confidence, Station information)
         """
-        if not self.voc_match(phrase, 'News'):
+        if not self.voc_match(phrase.lower(), 'News'):
             # The utterance does not contain news vocab. Do not match.
             return None
         match = match_station_from_utterance(self, phrase)
