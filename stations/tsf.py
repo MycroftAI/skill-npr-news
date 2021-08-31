@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import requests
 from datetime import timedelta
+from http import HTTPStatus
+
+import requests
 from pytz import timezone
 
 from mycroft.util.time import now_local
@@ -25,15 +27,15 @@ def get_tsf_url():
     feed = ('https://www.tsf.pt/stream/audio/{year}/{month:02d}/'
             'noticias/{day:02d}/not{hour:02d}.mp3')
     uri = None
-    i = 0
-    status = 404
+    hours_offset = 0
+    status = HTTPStatus.NOT_FOUND
     date = now_local(timezone('Portugal'))
-    while status != 200 and i < 5:
-        date -= timedelta(hours=i)
+    while status != HTTPStatus.OK and hours_offset < 5:
+        date -= timedelta(hours=hours_offset)
         uri = feed.format(hour=date.hour, year=date.year,
                           month=date.month, day=date.day)
         status = requests.get(uri).status_code
-        i += 1
-    if status != 200:
+        hours_offset += 1
+    if status != HTTPStatus.OK:
         return None
     return uri
