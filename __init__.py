@@ -127,10 +127,13 @@ class NewsSkill(CommonPlaySkill):
         Returns:
             Tuple(Name of station, confidence, Station information)
         """
+        if not self.voc_match(phrase, 'News'):
+            # The utterance does not contain news vocab. Do not match.
+            return None
         match = match_station_from_utterance(self, phrase)
         
         # If no match but utterance contains news, return low confidence level
-        if match.confidence < CONF_GENERIC_MATCH and self.voc_match(phrase, "News"):
+        if match.confidence < CONF_GENERIC_MATCH:
             match = Match(self.get_default_station(), CONF_GENERIC_MATCH)
 
         # Translate match confidence levels to CPSMatchLevels

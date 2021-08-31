@@ -77,13 +77,13 @@ def match_station_from_utterance(skill, utterance):
     """
     match = Match(None, 0.0)
 
+    utterance = utterance.lower().strip()
     # Remove articles like "the" as it matches too well with "other"
-    search_phrase = utterance.lower().replace('the', '').strip()
+    word_list = utterance.split(' ')
+    if 'the' in word_list:
+        word_list.remove('the')
+    utterance = ' '.join(word_list)
 
-    if not skill.voc_match(search_phrase, 'News'):
-        # User is not asking for the news - do not match.
-        return match
-    
     # If news vocab does exist, provide a minimum default confidence
     default_station = skill.get_default_station()
     match = Match(default_station, CONF_GENERIC_MATCH)
