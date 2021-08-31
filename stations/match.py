@@ -77,7 +77,7 @@ def match_station_from_utterance(skill, utterance):
     """
     match = Match(None, 0.0)
 
-    # Remove articles like "the" as it matches too well will "other"
+    # Remove articles like "the" as it matches too well with "other"
     search_phrase = utterance.lower().replace('the', '').strip()
 
     if not skill.voc_match(search_phrase, 'News'):
