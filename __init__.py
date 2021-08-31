@@ -40,7 +40,7 @@ class NewsSkill(CommonPlaySkill):
     def __init__(self):
         super().__init__(name="NewsSkill")
         self.now_playing = None
-        self.last_message = None
+        self.last_station_played = None
         self.curl = None
 
     def initialize(self):
@@ -104,9 +104,9 @@ class NewsSkill(CommonPlaySkill):
 
     @intent_handler(IntentBuilder('').require('Restart'))
     def restart_playback(self, message):
-        self.log.debug('Restarting last message')
-        if self.last_message:
-            self.handle_latest_news(self.last_message[1])
+        self.log.info('Restarting last station to be played')
+        if self.last_station_played:
+            self.handle_play_request(self.last_station_played)
 
     def CPS_start(self, _, data):
         """Handle request from Common Play System to start playback."""
@@ -207,7 +207,7 @@ class NewsSkill(CommonPlaySkill):
         # Speak intro while downloading in background
         self.speak_dialog('news', data={"from": station.full_name})
         self._play_station(station)
-        self.last_message = (True, message)
+        self.last_station_played = station
         self.enable_intent('restart_playback')
 
     @property
@@ -271,9 +271,9 @@ class NewsSkill(CommonPlaySkill):
             return False
         self.now_playing = None
         # Disable restarting when stopped
-        if self.last_message:
+        if self.last_station_played:
             self.disable_intent('restart_playback')
-            self.last_message = None
+            self.last_station_played = None
 
         # Stop download process if it's running.
         self.stop_curl_process()
