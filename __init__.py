@@ -22,9 +22,8 @@ from mycroft.audio import wait_while_speaking
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
-from .stations import add_custom_station, stations
 from .stations.match import match_station_from_utterance, Match
-from .stations.station import BaseStation
+from .stations.station import create_custom_station, BaseStation, stations
 from .stations.util import contains_html, find_mime_type
 
 
@@ -78,7 +77,7 @@ class NewsSkill(CommonPlaySkill):
         custom_url = self.settings.get("custom_url", "")
         if station_code == "not_set" and len(custom_url) > 0:
             self.log.info("Creating custom News Station from Skill settings.")
-            add_custom_station(custom_url)
+            create_custom_station(custom_url)
 
     @intent_handler(AdaptIntent("").one_of("Give", "Latest").require("News"))
     def handle_latest_news(self, message):

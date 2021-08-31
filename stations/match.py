@@ -17,7 +17,7 @@ from collections import namedtuple
 from mycroft.util import LOG
 from mycroft.util.parse import fuzzy_match
 
-from . import stations
+from .station import stations
 
 
 # Minimum confidence levels
