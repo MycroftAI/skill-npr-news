@@ -50,7 +50,7 @@ def match_station_name(phrase, station, aliases, news_keyword):
 
     # Check aliases defined in alt.feed.name.value
     if aliases:
-        match_confidences += [fuzzy_match(phrase, alias) for alias in aliases]
+        match_confidences.extend([fuzzy_match(phrase, alias) for alias in aliases])
 
     # If phrase contains both a station acronym and the news keyword
     # ensure minimum confidences.
