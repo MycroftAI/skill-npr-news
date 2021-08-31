@@ -17,9 +17,9 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
 def get_abc_url():
-    """Custom news fetcher for ABC News Australia briefing.
+    """Custom news scraper for ABC News Australia briefing.
     
-    Finds the latest episode from the News Briefings overview page."""
+    Scrapes the News Briefings overview page to find the latest episode."""
     domain = "https://www.abc.net.au"
     latest_briefings_url = f"{domain}/radio/newsradio/news-briefings/"
     soup = BeautifulSoup(urlopen(latest_briefings_url), features='html.parser')
