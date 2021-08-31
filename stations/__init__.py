@@ -15,7 +15,7 @@
 
 from mycroft.util import LOG
 
-from .station import FetcherStation, FileStation, RSSStation
+from .station import FetcherStation, FileStation, RSSStation, create_custom_station
 from .abc import get_abc_url
 from .ft import get_ft_url
 from .gpb import get_gpb_url
@@ -58,17 +58,6 @@ stations = dict(
 )
 
 
-def set_custom_station(station_url):
-    """Create a new station from a custom url.
-
-    First tests to see if the url can be read as an RSS feed, if not assumes it is a
-    direct link.
-
-    NOTE: it cannot be a FetcherStation because you can't define the fetching function.
-    """
-    is_rss_feed = RSSStation.get_media_from_rss(station_url)
-    if is_rss_feed:
-        clazz = RSSStation
-    else:
-        clazz = FileStation
-    stations['custom'] = clazz('custom', 'Your custom station', station_url)
+def add_custom_station(station_url: str):
+    """Create a new station from a custom url and add it to the stations list."""
+    stations['custom'] = create_custom_station(station_url)

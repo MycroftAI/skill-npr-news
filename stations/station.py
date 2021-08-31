@@ -99,24 +99,49 @@ class RSSStation(BaseStation):
     @property
     def media_uri(self) -> str:
         """Get the uri for the media file to be played."""
-        media_url = self.get_media_from_rss(self._rss_url)
+        media_url = self._get_audio_from_rss()
         # TODO - check on temporary workaround and remove - see issue #87
         if self._rss_url.startswith('https://www.npr.org/'):
             media_url = media_url.split('?')[0]
         return media_url
 
-    @staticmethod
-    def get_media_from_rss(rss_url):
-        try:
-            data = feedparser.parse(rss_url.strip())
+    def _get_audio_from_rss(self) -> str:
+        """Get the first audio url from the Station RSS feed.
+
+        Selects the first link to an audio file, or falls back to the
+        first href link in the entry if no explicit audio can be found.
+
+        Args:
+            rss_url: RSS feed to parse
+
+        Returns:
+            Url to a media file or None if no link can be found.
+        """
+        audio_url = None
+        data = feedparser.parse(self._rss_url)
+        if data.entries:
             # select the first link to an audio file
             for link in data['entries'][0]['links']:
                 if 'audio' in link['type']:
-                    media_url = link['href']
+                    audio_url = link['href']
                     break
                 else:
                     # fall back to using the first link in the entry
-                    media_url = data['entries'][0]['links'][0]['href']
-        except:
-            media_url = None
-        return media_url
+                    audio_url = data['entries'][0]['links'][0]['href']
+        return audio_url
+
+
+def create_custom_station(station_url):
+    """Create a new station from a custom url.
+
+    First tests to see if the url can be read as an RSS feed, if not assumes it is a
+    direct link.
+
+    NOTE: it cannot be a FetcherStation because you can't define the fetching function.
+    """
+    is_rss_feed = feedparser.parse(station_url).entries > 0
+    if is_rss_feed:
+        clazz = RSSStation
+    else:
+        clazz = FileStation
+    return clazz('custom', 'Your custom station', station_url)
