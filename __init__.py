@@ -259,7 +259,7 @@ class NewsSkill(CommonPlaySkill):
                 "track": station.full_name,
                 "album": "",
                 "skill": "News",
-                "length": -1,  # hide progress bar until it's implemented
+                # "length": -1,  # hide progress bar until it's implemented
                 "status": "Playing"
             }
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
