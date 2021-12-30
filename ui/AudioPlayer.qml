@@ -220,7 +220,7 @@ Mycroft.CardDelegate {
                                         } else {
                                             triggerGuiEvent("cps.gui.pause", {"media": {
                                                                     "image": media.image,
-                                                                    "title": media.title,
+                                                                    "track": media.track,
                                                                     "album": media.album,
                                                                     "skill_id":media.skill,
                                                                     "length": media.length,

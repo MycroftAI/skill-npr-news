@@ -19,6 +19,7 @@ from urllib.parse import quote
 
 from mycroft import intent_handler, AdaptIntent
 from mycroft.audio import wait_while_speaking
+from mycroft.messagebus import Message
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from mycroft.util import get_cache_directory
 
@@ -46,6 +47,7 @@ class NewsSkill(CommonPlaySkill):
         self.disable_intent('restart_playback')
         # Longer titles or alternative common names of feeds for searching
         self.alternate_station_names = self.load_alternate_station_names()
+        self.register_gui_handlers()
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
 
@@ -68,6 +70,22 @@ class NewsSkill(CommonPlaySkill):
                 alternate_station_names[acronym] = []
             alternate_station_names[acronym].append(name)
         return alternate_station_names
+
+    def register_gui_handlers(self):
+        """Register handlers for events coming from the GUI."""
+        self.gui.register_handler('cps.gui.pause', self.handle_gui_status_change)
+        self.gui.register_handler('cps.gui.play', self.handle_gui_status_change)
+
+    def handle_gui_status_change(self, message):
+        """Handle play and pause status changes from the GUI."""
+        media_data = message.data.get('media', {})
+        new_status = media_data['status']
+        if new_status == "Playing":
+            self.bus.emit(Message('mycroft.audio.service.resume'))
+        elif new_status == "Paused":
+            self.bus.emit(Message('mycroft.audio.service.pause'))
+        self.gui['media'] = media_data
+
 
     def on_websettings_changed(self):
         """Callback triggered anytime Skill settings are modified on backend."""
@@ -235,15 +253,15 @@ class NewsSkill(CommonPlaySkill):
                 self.CPS_play((f"file://{stream}", mime))
             else:
                 self.CPS_play((media_url, mime))
-            gui_data = {
+            self.gui['media'] = {
                 "image": str(station.image_path),
                 "artist": station.acronym,
                 "track": station.full_name,
                 "album": "",
                 "skill": "News",
-                "length": -1  # hide progress bar until it's implemented
+                "length": -1,  # hide progress bar until it's implemented
+                "status": "Playing"
             }
-            self.gui['media'] = gui_data
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
             self.gui.show_page("AudioPlayer.qml", override_idle=True)
             self.CPS_send_status(
