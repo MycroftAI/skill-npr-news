@@ -235,6 +235,17 @@ class NewsSkill(CommonPlaySkill):
                 self.CPS_play((f"file://{stream}", mime))
             else:
                 self.CPS_play((media_url, mime))
+            gui_data = {
+                "image": str(station.image_path),
+                "artist": station.acronym,
+                "track": station.full_name,
+                "album": "",
+                "skill": "News",
+                "length": -1  # hide progress bar until it's implemented
+            }
+            self.gui['media'] = gui_data
+            self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
+            self.gui.show_page("AudioPlayer.qml", override_idle=True)
             self.CPS_send_status(
                 # cast to str for json serialization
                 image=str(station.image_path),
