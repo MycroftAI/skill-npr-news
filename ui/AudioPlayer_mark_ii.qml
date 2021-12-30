@@ -38,7 +38,7 @@ Mycroft.CardDelegate {
     property var media: sessionData.media
     property var playerDuration: media.length
     property real playerPosition: 0
-    property var playerState: media.status
+    property var playerState: sessionData.status
     property bool countdowntimerpaused: false
 
     function formatTime(ms) {
@@ -202,10 +202,10 @@ Mycroft.CardDelegate {
                                                                     "image": media.image,
                                                                     "track": media.track,
                                                                     "album": media.album,
-                                                                    "skill": media.skill,
+                                                                    "skill_id": media.skill,
                                                                     "length": media.length,
-                                                                    "position": playerPosition,
-                                                                    "status": "Playing"}})
+                                                                    "position": playerPosition
+                                                                    }})
                                         } else {
                                             triggerGuiEvent("cps.gui.pause", {"media": {
                                                                     "image": media.image,
@@ -213,8 +213,8 @@ Mycroft.CardDelegate {
                                                                     "album": media.album,
                                                                     "skill_id":media.skill,
                                                                     "length": media.length,
-                                                                    "position": playerPosition,
-                                                                    "status": "Paused"}})
+                                                                    "position": playerPosition
+                                                                    }})
                                         }
                                     }
 

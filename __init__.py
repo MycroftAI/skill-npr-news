@@ -50,7 +50,7 @@ class NewsSkill(CommonPlaySkill):
         self.register_gui_handlers()
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
-        # self._play_station(self.get_default_station())
+        self._play_station(self.get_default_station())
 
     def load_alternate_station_names(self) -> dict:
         """Load the list of alternate station names from alt.feed.name.value
@@ -73,19 +73,41 @@ class NewsSkill(CommonPlaySkill):
         return alternate_station_names
 
     def register_gui_handlers(self):
-        """Register handlers for events coming from the GUI."""
+        """Register handlers for events to or from the GUI."""
+        self.bus.on('mycroft.audio.service.pause', self.handle_audioservice_status_change)
+        self.bus.on('mycroft.audio.service.resume', self.handle_audioservice_status_change)
         self.gui.register_handler('cps.gui.pause', self.handle_gui_status_change)
         self.gui.register_handler('cps.gui.play', self.handle_gui_status_change)
 
+    def handle_audioservice_status_change(self, message):
+        """Handle changes in playback status from the Audioservice.
+        
+        Eg when someone verbally asks to pause.
+        """
+        if not self.now_playing:
+            return
+        command = message.msg_type.split('.')[-1]
+        if command == "resume":
+            new_status = "Playing"
+        elif command == "pause":
+            new_status = "Paused"
+        self.gui['status'] = new_status
+
     def handle_gui_status_change(self, message):
-        """Handle play and pause status changes from the GUI."""
-        media_data = message.data.get('media', {})
-        new_status = media_data['status']
-        if new_status == "Playing":
+        """Handle play and pause status changes from the GUI.
+        
+        This notifies the audioservice. The GUI state only changes once the
+        audioservice emits the relevant messages to say the state has changed.
+        """
+        if not self.now_playing:
+            return
+        command = message.msg_type.split('.')[-1]
+        if command == "play":
+            self.log.info("Audio resumed by GUI.")
             self.bus.emit(Message('mycroft.audio.service.resume'))
-        elif new_status == "Paused":
+        elif command == "pause":
+            self.log.info("Audio paused by GUI.")
             self.bus.emit(Message('mycroft.audio.service.pause'))
-        self.gui['media'] = media_data
 
     def on_websettings_changed(self):
         """Callback triggered anytime Skill settings are modified on backend."""
@@ -258,10 +280,9 @@ class NewsSkill(CommonPlaySkill):
                 "artist": station.acronym,
                 "track": station.full_name,
                 "album": "",
-                "skill": "News",
-                # "length": -1,  # hide progress bar until it's implemented
-                "status": "Playing"
+                "skill": "News"
             }
+            self.gui['status'] = "Playing"
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
             self.gui.show_page("AudioPlayer_mark_ii.qml", override_idle=True)
             self.CPS_send_status(
