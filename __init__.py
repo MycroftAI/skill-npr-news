@@ -50,6 +50,7 @@ class NewsSkill(CommonPlaySkill):
         self.register_gui_handlers()
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
+        # self._play_station(self.get_default_station())
 
     def load_alternate_station_names(self) -> dict:
         """Load the list of alternate station names from alt.feed.name.value
@@ -85,7 +86,6 @@ class NewsSkill(CommonPlaySkill):
         elif new_status == "Paused":
             self.bus.emit(Message('mycroft.audio.service.pause'))
         self.gui['media'] = media_data
-
 
     def on_websettings_changed(self):
         """Callback triggered anytime Skill settings are modified on backend."""
@@ -263,7 +263,7 @@ class NewsSkill(CommonPlaySkill):
                 "status": "Playing"
             }
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
-            self.gui.show_page("AudioPlayer.qml", override_idle=True)
+            self.gui.show_page("AudioPlayer_mark_ii.qml", override_idle=True)
             self.CPS_send_status(
                 # cast to str for json serialization
                 image=str(station.image_path),

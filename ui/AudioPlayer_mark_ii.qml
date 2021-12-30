@@ -54,10 +54,11 @@ Mycroft.CardDelegate {
 
     onPlayerStateChanged: {
         console.log(playerState)
-        root.playerPosition = media.position
         if(playerState === "Playing"){
+            root.playerPosition = media.position
             countdowntimer.running = true
         } else if(playerState === "Paused") {
+            root.playerPosition = media.position
             countdowntimer.running = false
         }
     }
@@ -102,8 +103,8 @@ Mycroft.CardDelegate {
                     columns: 2
 
                     Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
+                        width: Mycroft.Units.gridUnit * 18
+                        height: Mycroft.Units.gridUnit * 18
                         Layout.bottomMargin: 11
                         color: theme.fgColor
                         radius: Mycroft.Units.gridUnit
