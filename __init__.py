@@ -48,6 +48,7 @@ class NewsSkill(CommonPlaySkill):
         # Longer titles or alternative common names of feeds for searching
         self.alternate_station_names = self.load_alternate_station_names()
         self.register_gui_handlers()
+        self.platform = self.config_core["enclosure"].get("platform", "unknown")
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
         self._play_station(self.get_default_station())
@@ -285,7 +286,7 @@ class NewsSkill(CommonPlaySkill):
             }
             self.gui['status'] = "Playing"
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)
-            self.gui.show_page("AudioPlayer_mark_ii.qml", override_idle=True)
+            self._show_gui_page("AudioPlayer")
             self.CPS_send_status(
                 # cast to str for json serialization
                 image=str(station.image_path),
@@ -295,6 +296,15 @@ class NewsSkill(CommonPlaySkill):
         except ValueError as e:
             self.speak_dialog("could.not.start.the.news.feed")
             self.log.exception(e)
+    
+    def _show_gui_page(self, page):
+        """Show a page variation depending on platform."""
+        if self.gui.connected:
+            if self.platform == "mycroft_mark_2":
+                page = f"{page}_mark_ii.qml"
+            else:
+                page = f"{page}_scalable.qml"
+            self.gui.show_page(page, override_idle=True)
 
     def stop_curl_process(self):
         """Stop any running curl download process."""
