@@ -53,6 +53,10 @@ Mycroft.CardDelegate {
 
     onPlayerStateChanged: {
         console.log(playerState)
+        if (isStreaming) {
+            // Has no media/player position
+            return
+        }
         if(playerState === "Playing"){
             root.playerPosition = media.position
             countdowntimer.running = true
