@@ -319,8 +319,6 @@ class NewsSkill(CommonPlaySkill):
                 qml_page = f"{page}_mark_ii.qml"
             else:
                 qml_page = f"{page}_scalable.qml"
-            qml_page = f"{page}_mark_ii.qml"
-            self.log.error(qml_page)
             self.gui.show_page(qml_page, override_idle=True)
 
     def stop_curl_process(self):
