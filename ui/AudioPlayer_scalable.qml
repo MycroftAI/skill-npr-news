@@ -283,7 +283,7 @@ Mycroft.CardDelegate {
                                     Layout.fillHeight: true
                                     Layout.alignment: Qt.AlignVCenter
                                     onClicked: {
-                                        triggerGuiEvent("cps.gui.suffle", {})
+                                        triggerGuiEvent("cps.gui.shuffle", {})
                                     }
 
                                     background: Rectangle {
