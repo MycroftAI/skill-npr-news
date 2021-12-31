@@ -119,7 +119,7 @@ Mycroft.CardDelegate {
                 anchors.right: parent.right
                 anchors.bottom: bottomArea.top
                 anchors.left: imageContainer.right
-                anchors.topMargin: Mycroft.Units.gridUnit * 2
+                // anchors.topMargin: provided by root container
                 // anchors.rightMargin: provided by root container
                 anchors.bottomMargin: Mycroft.Units.gridUnit * 2
                 anchors.leftMargin: Mycroft.Units.gridUnit * 2
@@ -132,12 +132,11 @@ Mycroft.CardDelegate {
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width
-                    height: Mycroft.Units.gridUnit * 10
+                    height: Mycroft.Units.gridUnit * 5
 
                     Title {
                         id: newsBriefingTitle
                         anchors.top: parent.top
-                        anchors.topMargin: Mycroft.Units.gridUnit
                         anchors.horizontalCenter: parent.horizontalCenter
                         fontSize: 35
                         fontStyle: "Bold"
@@ -154,82 +153,82 @@ Mycroft.CardDelegate {
                         fontSize: 47
                         fontStyle: "Bold"
                         color: theme.fgColor
-                        heightUnits: 4
+                        heightUnits: 3
                         text: media.artist
                     }
+                }
+                Item {
+                    id: mediaControls
+                    anchors.top: trackInfo.bottom
+                    anchors.topMargin: Mycroft.Units.gridUnit * 2
+                    anchors.right: mediaControlsContainer.right
+                    width: mediaControlsContainer.width
+                    height: mediaControlsContainer.height - trackInfo.height
 
-                    Item {
-                        id: mediaControls
-                        anchors.top: trackInfo.bottom
-                        anchors.right: mediaControlsContainer.right
-                        width: mediaControlsContainer.width
-                        height: mediaControlsContainer.height - trackInfo.height
+                    Controls.Button {
+                        id: restartButton
+                        anchors.right: playButton.left
+                        anchors.rightMargin: Mycroft.Units.gridUnit * 4
+                        anchors.top: mediaControls.top
+                        height: Mycroft.Units.gridUnit * 5
+                        width: Mycroft.Units.gridUnit * 5
+                        focus: false
+                        KeyNavigation.right: playButton
+                        KeyNavigation.down: seekableslider
+                        onClicked: {
+                            triggerGuiEvent("cps.gui.restart", {})
+                        }
 
-                        Controls.Button {
-                            id: restartButton
-                            anchors.right: playButton.left
-                            anchors.rightMargin: Mycroft.Units.gridUnit * 4
-                            anchors.top: mediaControls.top
-                            height: Mycroft.Units.gridUnit * 5
-                            width: Mycroft.Units.gridUnit * 5
-                            focus: false
-                            KeyNavigation.right: playButton
-                            KeyNavigation.down: seekableslider
-                            onClicked: {
-                                triggerGuiEvent("cps.gui.restart", {})
-                            }
+                        contentItem: Kirigami.Icon {
+                            source: Qt.resolvedUrl("images/media-restart.svg")
+                            color: theme.fgColor
+                        }
 
-                            contentItem: Kirigami.Icon {
-                                source: Qt.resolvedUrl("images/media-restart.svg")
-                                color: theme.fgColor
-                            }
+                        background: Rectangle {
+                            color: "transparent"
+                        }
 
-                            background: Rectangle {
-                                color: "transparent"
-                            }
+                        Keys.onReturnPressed: {
+                            clicked()
+                        }
+                    }
 
-                            Keys.onReturnPressed: {
-                                clicked()
+                    Controls.Button {
+                        id: playButton
+                        anchors.right: mediaControls.right
+                        anchors.rightMargin: Mycroft.Units.gridUnit * 4
+                        anchors.top: mediaControls.top
+                        height: Mycroft.Units.gridUnit * 5
+                        width: Mycroft.Units.gridUnit * 5
+                        onClicked: {
+                            if (playerState != "Playing"){
+                                triggerGuiEvent("cps.gui.play", {"media": {
+                                                        "image": media.image,
+                                                        "track": media.track,
+                                                        "album": media.album,
+                                                        "skill_id": media.skill,
+                                                        "length": media.length,
+                                                        "position": playerPosition
+                                                        }})
+                            } else {
+                                triggerGuiEvent("cps.gui.pause", {"media": {
+                                                        "image": media.image,
+                                                        "track": media.track,
+                                                        "album": media.album,
+                                                        "skill_id":media.skill,
+                                                        "length": media.length,
+                                                        "position": playerPosition
+                                                        }})
                             }
                         }
 
-                        Controls.Button {
-                            id: playButton
-                            anchors.right: mediaControls.right
-                            anchors.rightMargin: Mycroft.Units.gridUnit * 4
-                            anchors.top: mediaControls.top
-                            height: Mycroft.Units.gridUnit * 5
-                            width: Mycroft.Units.gridUnit * 5
-                            onClicked: {
-                                if (playerState != "Playing"){
-                                    triggerGuiEvent("cps.gui.play", {"media": {
-                                                            "image": media.image,
-                                                            "track": media.track,
-                                                            "album": media.album,
-                                                            "skill_id": media.skill,
-                                                            "length": media.length,
-                                                            "position": playerPosition
-                                                            }})
-                                } else {
-                                    triggerGuiEvent("cps.gui.pause", {"media": {
-                                                            "image": media.image,
-                                                            "track": media.track,
-                                                            "album": media.album,
-                                                            "skill_id":media.skill,
-                                                            "length": media.length,
-                                                            "position": playerPosition
-                                                            }})
-                                }
-                            }
+                        background: Rectangle {
+                            color: "transparent"
+                        }
 
-                            background: Rectangle {
-                                color: "transparent"
-                            }
-
-                            contentItem: Kirigami.Icon {
-                                color: theme.fgColor
-                                source: playerState === "Playing" ? Qt.resolvedUrl("images/media-playback-pause.svg") : Qt.resolvedUrl("images/media-playback-start.svg")
-                            }
+                        contentItem: Kirigami.Icon {
+                            color: theme.fgColor
+                            source: playerState === "Playing" ? Qt.resolvedUrl("images/media-playback-pause.svg") : Qt.resolvedUrl("images/media-playback-start.svg")
                         }
                     }
                 }
