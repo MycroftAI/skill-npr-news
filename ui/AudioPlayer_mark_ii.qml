@@ -40,7 +40,7 @@ Mycroft.CardDelegate {
     property real playerPosition: 0
     property var playerState: sessionData.status
     property bool isStreaming: media.streaming
-    property bool countdowntimerpaused: false
+    property bool streamTimerPaused: false
 
     function formatTime(ms) {
         if (typeof(ms) !== "number") {
@@ -53,29 +53,24 @@ Mycroft.CardDelegate {
 
     onPlayerStateChanged: {
         console.log(playerState)
-        if (isStreaming) {
-            // Has no media/player position
-            return
+        if (!isStreaming) {
+            root.playerPosition = media.position
         }
         if(playerState === "Playing"){
-            root.playerPosition = media.position
-            countdowntimer.running = true
+            streamTimer.running = true
         } else if(playerState === "Paused") {
-            root.playerPosition = media.position
-            countdowntimer.running = false
+            streamTimer.running = false
         }
     }
 
     Timer {
-        id: countdowntimer
+        id: streamTimer
         interval: 1000
         running: false
         repeat: true
         onTriggered: {
-            if(media.length > playerPosition){
-                if(!countdowntimerpaused){
-                    playerPosition = playerPosition + 1000
-                }
+            if(!streamTimerPaused){
+                playerPosition = playerPosition + 1000
             }
         }
     }
@@ -290,20 +285,6 @@ Mycroft.CardDelegate {
                 enabled: media.length !== -1 ? 1 : 0
                 value: playerPosition
 
-                onPressedChanged: {
-                    if(seekableslider.pressed){
-                        root.countdowntimerpaused = true
-                    } else {
-                        root.countdowntimerpaused = false
-                    }
-                }
-
-                onValueChanged: {
-                    if(root.countdowntimerpaused){
-                        triggerGuiEvent("cps.gui.seek", {"seekValue": value})
-                    }
-                }
-
                 handle: Item {
                     x: seekableslider.visualPosition * (parent.width - (Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing))
                     anchors.verticalCenter: parent.verticalCenter
@@ -345,17 +326,6 @@ Mycroft.CardDelegate {
                     height: Mycroft.Units.gridUnit * 2
                     radius: Mycroft.Units.gridUnit
                     color: theme.bgColor
-
-                    Rectangle {
-                        width: seekableslider.visualPosition * parent.width
-                        height: parent.height
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0.0; color: "#21bea6" }
-                            GradientStop { position: 1.0; color: "#2194be" }
-                        }
-                        radius: Mycroft.Units.gridUnit
-                    }
                 }
             }
         }
