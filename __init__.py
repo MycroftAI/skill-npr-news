@@ -280,7 +280,8 @@ class NewsSkill(CommonPlaySkill):
                 "artist": station.acronym,
                 "track": station.full_name,
                 "album": "",
-                "skill": "News"
+                "skill": self.skill_id,
+                "streaming": True
             }
             self.gui['status'] = "Playing"
             self.gui['theme'] = dict(fgColor="white", bgColor=station.color)

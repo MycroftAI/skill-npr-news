@@ -39,6 +39,7 @@ Mycroft.CardDelegate {
     property var playerDuration: media.length
     property real playerPosition: 0
     property var playerState: sessionData.status
+    property bool isStreaming: media.streaming
     property bool countdowntimerpaused: false
 
     function formatTime(ms) {
@@ -371,7 +372,9 @@ Mycroft.CardDelegate {
                     height: Mycroft.Units.gridUnit * 2
 
                     Rectangle {
-                        id: hand
+                        id: positionMarker
+                        visible: !isStreaming
+                        enabled: !isStreaming
                         anchors.verticalCenter: parent.verticalCenter
                         implicitWidth: Mycroft.Units.gridUnit * 2
                         implicitHeight: Mycroft.Units.gridUnit * 2
@@ -381,10 +384,25 @@ Mycroft.CardDelegate {
                     }
                 }
 
+                Controls.Label {
+                    id: streamingLabel
+                    visible: isStreaming
+                    enabled: isStreaming
+                    width: seekableslider.availableWidth
+                    height: seekableslider.availableHeight
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "STREAMING"
+                    font.pixelSize: Mycroft.Units.gridUnit * 1.5
+                    font.capitalization: Font.Capitalize
+                    font.bold: true
+                    color: theme.fgColor
+                }
+
                 background: Rectangle {
+                    id: sliderBackground
                     x: seekableslider.leftPadding
                     y: seekableslider.topPadding + seekableslider.availableHeight / 2 - height / 2
-                    implicitHeight: 10
                     width: seekableslider.availableWidth
                     height: Mycroft.Units.gridUnit * 2
                     radius: Mycroft.Units.gridUnit
