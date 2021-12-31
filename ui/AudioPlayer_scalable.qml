@@ -38,26 +38,26 @@ Mycroft.CardDelegate {
     property var media: sessionData.media
     property var playerDuration: media.length
     property real playerPosition: 0
-    property var playerState: media.status
+    property var playerState: sessionData.status
+    property bool isStreaming: media.streaming
     property bool countdowntimerpaused: false
 
-    function formattedTime(ms){
+    function formatTime(ms) {
+        if (typeof(ms) !== "number") {
+            return "";
+        }
         var minutes = Math.floor(ms / 60000);
         var seconds = ((ms % 60000) / 1000).toFixed(0);
         return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
     }
 
-    Controls.ButtonGroup {
-        id: autoPlayRepeatGroup
-        buttons: autoPlayRepeatGroupLayout.children
-    }
-
     onPlayerStateChanged: {
         console.log(playerState)
-        root.playerPosition = media.position
         if(playerState === "Playing"){
+            root.playerPosition = media.position
             countdowntimer.running = true
         } else if(playerState === "Paused") {
+            root.playerPosition = media.position
             countdowntimer.running = false
         }
     }
@@ -78,7 +78,7 @@ Mycroft.CardDelegate {
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: Mycroft.Units.gridUnit * 2
+        radius: Mycroft.Units.gridUnit
         color: Qt.darker(theme.bgColor)
 
         ColumnLayout {
@@ -98,13 +98,12 @@ Mycroft.CardDelegate {
                 GridLayout {
                     id: mainLayout
                     anchors.fill: parent
-                    columnSpacing: 32
+                    columnSpacing: Mycroft.Units.gridUnit * 2
                     columns: 2
 
                     Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.bottomMargin: 11
+                        width: Mycroft.Units.gridUnit * 18
+                        height: Mycroft.Units.gridUnit * 18
                         color: theme.fgColor
                         radius: Mycroft.Units.gridUnit
 
@@ -203,10 +202,10 @@ Mycroft.CardDelegate {
                                                                     "image": media.image,
                                                                     "track": media.track,
                                                                     "album": media.album,
-                                                                    "skill": media.skill,
+                                                                    "skill_id": media.skill,
                                                                     "length": media.length,
-                                                                    "position": playerPosition,
-                                                                    "status": "Playing"}})
+                                                                    "position": playerPosition
+                                                                    }})
                                         } else {
                                             triggerGuiEvent("cps.gui.pause", {"media": {
                                                                     "image": media.image,
@@ -214,8 +213,8 @@ Mycroft.CardDelegate {
                                                                     "album": media.album,
                                                                     "skill_id":media.skill,
                                                                     "length": media.length,
-                                                                    "position": playerPosition,
-                                                                    "status": "Paused"}})
+                                                                    "position": playerPosition
+                                                                    }})
                                         }
                                     }
 
@@ -313,31 +312,28 @@ Mycroft.CardDelegate {
             RowLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.leftMargin: Mycroft.Units.gridUnit * 2
-                anchors.rightMargin: Mycroft.Units.gridUnit * 2
-                height: Mycroft.Units.gridUnit * 3
                 visible: media.length !== -1 ? 1 : 0
                 enabled: media.length !== -1 ? 1 : 0
                 
                 Controls.Label {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                    font.pixelSize: height * 0.9
+                    anchors.left: parent.left
+                    anchors.leftMargin: Mycroft.Units.gridUnit * 2
+                    font.pixelSize: Mycroft.Units.gridUnit * 2
+                    font.bold: true
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
-                    text: formattedTime(playerPosition)
+                    text: formatTime(playerPosition)
                     color: theme.fgColor
                 }
 
                 Controls.Label {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    font.pixelSize: height * 0.9
+                    anchors.right: parent.right
+                    anchors.rightMargin: Mycroft.Units.gridUnit * 2
+                    font.pixelSize: Mycroft.Units.gridUnit * 2
+                    font.bold: true
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
-                    text: formattedTime(playerDuration)
+                    text: formatTime(playerDuration)
                     color: theme.fgColor
                 }
             }
@@ -372,27 +368,44 @@ Mycroft.CardDelegate {
                 handle: Item {
                     x: seekableslider.visualPosition * (parent.width - (Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing))
                     anchors.verticalCenter: parent.verticalCenter
-                    height: Kirigami.Units.iconSizes.large
+                    height: Mycroft.Units.gridUnit * 2
 
                     Rectangle {
-                        id: hand
+                        id: positionMarker
+                        visible: !isStreaming
+                        enabled: !isStreaming
                         anchors.verticalCenter: parent.verticalCenter
-                        implicitWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing
-                        implicitHeight: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing
+                        implicitWidth: Mycroft.Units.gridUnit * 2
+                        implicitHeight: Mycroft.Units.gridUnit * 2
                         radius: 100
                         color: seekableslider.pressed ? "#f0f0f0" : "#f6f6f6"
-                        border.color: "#bdbebf"
+                        border.color: theme.bgColor
                     }
                 }
 
+                Controls.Label {
+                    id: streamingLabel
+                    visible: isStreaming
+                    enabled: isStreaming
+                    width: seekableslider.availableWidth
+                    height: seekableslider.availableHeight
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "STREAMING"
+                    font.pixelSize: Mycroft.Units.gridUnit * 1.5
+                    font.capitalization: Font.Capitalize
+                    font.bold: true
+                    color: theme.fgColor
+                }
+
                 background: Rectangle {
+                    id: sliderBackground
                     x: seekableslider.leftPadding
                     y: seekableslider.topPadding + seekableslider.availableHeight / 2 - height / 2
-                    implicitHeight: 10
                     width: seekableslider.availableWidth
-                    height: implicitHeight + Kirigami.Units.largeSpacing
-                    radius: 10
-                    color: "#bdbebf"
+                    height: Mycroft.Units.gridUnit * 2
+                    radius: Mycroft.Units.gridUnit
+                    color: theme.bgColor
 
                     Rectangle {
                         width: seekableslider.visualPosition * parent.width
@@ -402,7 +415,7 @@ Mycroft.CardDelegate {
                             GradientStop { position: 0.0; color: "#21bea6" }
                             GradientStop { position: 1.0; color: "#2194be" }
                         }
-                        radius: 9
+                        radius: Mycroft.Units.gridUnit
                     }
                 }
             }

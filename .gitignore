@@ -5,3 +5,6 @@ settings.json
 
 # Vim temp files
 .*.sw?
+
+# Dev stuff
+backup/
