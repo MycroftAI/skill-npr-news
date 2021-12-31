@@ -77,6 +77,7 @@ class NewsSkill(CommonPlaySkill):
         """Register handlers for events to or from the GUI."""
         self.bus.on('mycroft.audio.service.pause', self.handle_audioservice_status_change)
         self.bus.on('mycroft.audio.service.resume', self.handle_audioservice_status_change)
+        self.bus.on('mycroft.audio.queue_end', self.handle_media_finished)
         self.gui.register_handler('cps.gui.pause', self.handle_gui_status_change)
         self.gui.register_handler('cps.gui.play', self.handle_gui_status_change)
         self.gui.register_handler('cps.gui.restart', self.handle_gui_restart)
@@ -110,6 +111,12 @@ class NewsSkill(CommonPlaySkill):
         elif command == "pause":
             self.log.info("Audio paused by GUI.")
             self.bus.emit(Message('mycroft.audio.service.pause'))
+
+    def handle_media_finished(self, message):
+        """Handle media playback finishing."""
+        if self.now_playing:
+            self.gui.release()
+            self.now_playing = False
 
     def handle_gui_restart(self, message):
         """Handle restart button press."""
