@@ -79,6 +79,7 @@ class NewsSkill(CommonPlaySkill):
         self.bus.on('mycroft.audio.service.resume', self.handle_audioservice_status_change)
         self.gui.register_handler('cps.gui.pause', self.handle_gui_status_change)
         self.gui.register_handler('cps.gui.play', self.handle_gui_status_change)
+        self.gui.register_handler('cps.gui.restart', self.handle_gui_restart)
 
     def handle_audioservice_status_change(self, message):
         """Handle changes in playback status from the Audioservice.
@@ -110,6 +111,11 @@ class NewsSkill(CommonPlaySkill):
             self.log.info("Audio paused by GUI.")
             self.bus.emit(Message('mycroft.audio.service.pause'))
 
+    def handle_gui_restart(self, message):
+        """Handle restart button press."""
+        self.log.error("RESTARTING")
+        self.restart_playback(None)
+
     def on_websettings_changed(self):
         """Callback triggered anytime Skill settings are modified on backend."""
         station_code = self.settings.get("station", "not_set")
@@ -140,7 +146,7 @@ class NewsSkill(CommonPlaySkill):
 
     @intent_handler(AdaptIntent('').require('Restart'))
     def restart_playback(self, message):
-        self.log.info('Restarting last station to be played')
+        self.log.info(f'Restarting last station to be played: {self.last_station_played.acronym}')
         if self.last_station_played:
             self.handle_play_request(self.last_station_played)
 
@@ -265,6 +271,8 @@ class NewsSkill(CommonPlaySkill):
         """
         try:
             self.log.info(f'Playing News feed: {station.full_name}')
+            # Stop anything that might be playing already
+            self.bus.emit(Message('mycroft.audio.service.stop'))
             media_url = station.media_uri
             self.log.info(f'News media url: {media_url}')
             mime = find_mime_type(media_url)
@@ -301,10 +309,12 @@ class NewsSkill(CommonPlaySkill):
         """Show a page variation depending on platform."""
         if self.gui.connected:
             if self.platform == "mycroft_mark_2":
-                page = f"{page}_mark_ii.qml"
+                qml_page = f"{page}_mark_ii.qml"
             else:
-                page = f"{page}_scalable.qml"
-            self.gui.show_page(page, override_idle=True)
+                qml_page = f"{page}_scalable.qml"
+            qml_page = f"{page}_mark_ii.qml"
+            self.log.error(qml_page)
+            self.gui.show_page(qml_page, override_idle=True)
 
     def stop_curl_process(self):
         """Stop any running curl download process."""
