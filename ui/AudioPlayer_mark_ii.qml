@@ -81,7 +81,8 @@ Mycroft.CardDelegate {
         radius: Mycroft.Units.gridUnit
         color: Qt.darker(theme.bgColor)
 
-        ColumnLayout {
+        Item {
+            id: topArea
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
@@ -91,211 +92,144 @@ Mycroft.CardDelegate {
             anchors.rightMargin: Mycroft.Units.gridUnit * 2
 
             Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                id: imageContainer
+                width: Mycroft.Units.gridUnit * 18
+                height: Mycroft.Units.gridUnit * 18
+                anchors.top: parent.top // remove this on scalable
+                color: theme.fgColor
+                radius: Mycroft.Units.gridUnit
+
+                Image {
+                    id: trackImage
+                    visible: true
+                    enabled: true
+                    anchors.fill: parent
+                    anchors.leftMargin: Mycroft.Units.gridUnit / 2
+                    anchors.topMargin: Mycroft.Units.gridUnit / 2
+                    anchors.rightMargin: Mycroft.Units.gridUnit / 2
+                    anchors.bottomMargin: Mycroft.Units.gridUnit / 2
+                    source: media.image
+                    fillMode: Image.PreserveAspectFit
+                    z: 100
+                }
+            }
+
+            Rectangle {
+                id: mediaControlsContainer
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.bottom: bottomArea.top
+                anchors.left: imageContainer.right
+                anchors.topMargin: Mycroft.Units.gridUnit * 2
+                // anchors.rightMargin: provided by root container
+                anchors.bottomMargin: Mycroft.Units.gridUnit * 2
+                anchors.leftMargin: Mycroft.Units.gridUnit * 2
+                width: Mycroft.Units.gridUnit * 24
+                height: Mycroft.Units.gridUnit * 22 - bottomArea.height
                 color: "transparent"
 
-                GridLayout {
-                    id: mainLayout
-                    anchors.fill: parent
-                    columnSpacing: Mycroft.Units.gridUnit * 2
-                    columns: 2
+                Item {
+                    id: trackInfo
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width
+                    height: Mycroft.Units.gridUnit * 10
 
-                    Rectangle {
-                        width: Mycroft.Units.gridUnit * 18
-                        height: Mycroft.Units.gridUnit * 18
-                        anchors.top: parent.top // consider removing this on scalable
+                    Title {
+                        id: newsBriefingTitle
+                        anchors.top: parent.top
+                        anchors.topMargin: Mycroft.Units.gridUnit
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        fontSize: 35
+                        fontStyle: "Bold"
                         color: theme.fgColor
-                        radius: Mycroft.Units.gridUnit
-
-                        Image {
-                            id: albumImg
-                            visible: true
-                            enabled: true
-                            anchors.fill: parent
-                            anchors.leftMargin: Mycroft.Units.gridUnit / 2
-                            anchors.topMargin: Mycroft.Units.gridUnit / 2
-                            anchors.rightMargin: Mycroft.Units.gridUnit / 2
-                            anchors.bottomMargin: Mycroft.Units.gridUnit / 2
-                            source: media.image
-                            fillMode: Image.PreserveAspectFit
-                            z: 100
-                        }
+                        heightUnits: 2
+                        text: "News Briefing"
                     }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        color: "transparent"
+                    Title {
+                        id: station
+                        anchors.top: newsBriefingTitle.bottom
+                        anchors.topMargin: Mycroft.Units.gridUnit
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        fontSize: 47
+                        fontStyle: "Bold"
+                        color: theme.fgColor
+                        heightUnits: 4
+                        text: media.artist
+                    }
 
-                        ColumnLayout {
-                            anchors.fill: parent
+                    Item {
+                        id: mediaControls
+                        anchors.top: trackInfo.bottom
+                        anchors.right: mediaControlsContainer.right
+                        width: mediaControlsContainer.width
+                        height: mediaControlsContainer.height - trackInfo.height
 
-                            Controls.Label {
-                                id: authortitle
-                                text: "News Briefing"
-                                maximumLineCount: 1
-                                Layout.fillWidth: true
-                                font.bold: true
-                                font.pixelSize: Mycroft.Units.gridUnit * 2
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                font.capitalization: Font.Capitalize
+                        Controls.Button {
+                            id: restartButton
+                            anchors.right: playButton.left
+                            anchors.rightMargin: Mycroft.Units.gridUnit * 4
+                            anchors.top: mediaControls.top
+                            height: Mycroft.Units.gridUnit * 5
+                            width: Mycroft.Units.gridUnit * 5
+                            focus: false
+                            KeyNavigation.right: playButton
+                            KeyNavigation.down: seekableslider
+                            onClicked: {
+                                triggerGuiEvent("cps.gui.restart", {})
+                            }
+
+                            contentItem: Kirigami.Icon {
+                                source: Qt.resolvedUrl("images/media-restart.svg")
                                 color: theme.fgColor
-                                visible: true
-                                enabled: true
                             }
 
-                            Controls.Label {
-                                id: station
-                                text: media.artist
-                                maximumLineCount: 1
-                                Layout.fillWidth: true
-                                font.pixelSize: Mycroft.Units.gridUnit * 4
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                font.capitalization: Font.Capitalize
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+
+                            Keys.onReturnPressed: {
+                                clicked()
+                            }
+                        }
+
+                        Controls.Button {
+                            id: playButton
+                            anchors.right: mediaControls.right
+                            anchors.rightMargin: Mycroft.Units.gridUnit * 4
+                            anchors.top: mediaControls.top
+                            height: Mycroft.Units.gridUnit * 5
+                            width: Mycroft.Units.gridUnit * 5
+                            onClicked: {
+                                if (playerState != "Playing"){
+                                    triggerGuiEvent("cps.gui.play", {"media": {
+                                                            "image": media.image,
+                                                            "track": media.track,
+                                                            "album": media.album,
+                                                            "skill_id": media.skill,
+                                                            "length": media.length,
+                                                            "position": playerPosition
+                                                            }})
+                                } else {
+                                    triggerGuiEvent("cps.gui.pause", {"media": {
+                                                            "image": media.image,
+                                                            "track": media.track,
+                                                            "album": media.album,
+                                                            "skill_id":media.skill,
+                                                            "length": media.length,
+                                                            "position": playerPosition
+                                                            }})
+                                }
+                            }
+
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+
+                            contentItem: Kirigami.Icon {
                                 color: theme.fgColor
-                                visible: true
-                                enabled: true
-                            }
-
-
-                            RowLayout {
-                                spacing: Kirigami.Units.largeSpacing * 3
-
-                                Controls.Button {
-                                    id: previousButton
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    focus: false
-                                    KeyNavigation.right: playButton
-                                    KeyNavigation.down: seekableslider
-                                    onClicked: {
-                                        triggerGuiEvent("cps.gui.previous", {})
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        source: Qt.resolvedUrl("images/media-skip-backward.svg")
-                                        color: theme.fgColor
-                                    }
-
-                                    background: Rectangle {
-                                        color: "transparent"
-                                    }
-
-                                    Keys.onReturnPressed: {
-                                        clicked()
-                                    }
-                                }
-
-                                Controls.Button {
-                                    id: playButton
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    onClicked: {
-                                        if (playerState != "Playing"){
-                                            triggerGuiEvent("cps.gui.play", {"media": {
-                                                                    "image": media.image,
-                                                                    "track": media.track,
-                                                                    "album": media.album,
-                                                                    "skill_id": media.skill,
-                                                                    "length": media.length,
-                                                                    "position": playerPosition
-                                                                    }})
-                                        } else {
-                                            triggerGuiEvent("cps.gui.pause", {"media": {
-                                                                    "image": media.image,
-                                                                    "track": media.track,
-                                                                    "album": media.album,
-                                                                    "skill_id":media.skill,
-                                                                    "length": media.length,
-                                                                    "position": playerPosition
-                                                                    }})
-                                        }
-                                    }
-
-                                    background: Rectangle {
-                                        color: "transparent"
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        color: theme.fgColor
-                                        source: playerState === "Playing" ? Qt.resolvedUrl("images/media-playback-pause.svg") : Qt.resolvedUrl("images/media-playback-start.svg")
-                                    }
-                                }
-
-                                Controls.Button {
-                                    id: nextButton
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    onClicked: {
-                                        triggerGuiEvent("cps.gui.next", {})
-                                    }
-
-                                    background: Rectangle {
-                                        color: "transparent"
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        source: Qt.resolvedUrl("images/media-skip-forward.svg")
-                                        color: theme.fgColor
-                                    }
-                                }
-                            }
-
-                            RowLayout {
-                                spacing: Kirigami.Units.largeSpacing * 3
-
-                                Controls.Button {
-                                    id: repeatButton
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    focus: false
-                                    KeyNavigation.right: playButton
-                                    KeyNavigation.down: seekableslider
-                                    onClicked: {
-                                        triggerGuiEvent("cps.gui.repeat", {})
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        source: Qt.resolvedUrl("images/media-playlist-repeat.svg")
-                                        color: theme.fgColor
-                                    }
-
-                                    background: Rectangle {
-                                        color: "transparent"
-                                    }
-
-                                    Keys.onReturnPressed: {
-                                        clicked()
-                                    }
-                                }
-
-                                Controls.Button {
-                                    id: suffleButton
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    onClicked: {
-                                        triggerGuiEvent("cps.gui.suffle", {})
-                                    }
-
-                                    background: Rectangle {
-                                        color: "transparent"
-                                    }
-
-                                    contentItem: Kirigami.Icon {
-                                        source: Qt.resolvedUrl("images/media-playlist-shuffle.svg")
-                                        color: theme.fgColor
-                                    }
-                                }
+                                source: playerState === "Playing" ? Qt.resolvedUrl("images/media-playback-pause.svg") : Qt.resolvedUrl("images/media-playback-start.svg")
                             }
                         }
                     }
