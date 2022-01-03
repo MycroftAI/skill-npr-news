@@ -51,7 +51,6 @@ class NewsSkill(CommonPlaySkill):
         self.platform = self.config_core["enclosure"].get("platform", "unknown")
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
-        self._play_station(self.get_default_station())
 
     def load_alternate_station_names(self) -> dict:
         """Load the list of alternate station names from alt.feed.name.value
