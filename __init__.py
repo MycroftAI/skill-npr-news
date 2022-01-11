@@ -351,6 +351,7 @@ class NewsSkill(CommonPlaySkill):
         # Stop download process if it's running.
         self.stop_curl_process()
         self.CPS_send_status()
+        self.gui.clear()
         return True
 
 
