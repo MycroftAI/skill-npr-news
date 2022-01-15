@@ -16,6 +16,7 @@ import os
 import subprocess
 import time
 from urllib.parse import quote
+from typing import Tuple
 
 from mycroft import intent_handler, AdaptIntent
 from mycroft.audio import wait_while_speaking
@@ -111,13 +112,13 @@ class NewsSkill(CommonPlaySkill):
             self.log.info("Audio paused by GUI.")
             self.bus.emit(Message('mycroft.audio.service.pause'))
 
-    def handle_media_finished(self, message):
+    def handle_media_finished(self, _):
         """Handle media playback finishing."""
         if self.now_playing:
             self.gui.release()
             self.now_playing = False
 
-    def handle_gui_restart(self, message):
+    def handle_gui_restart(self, _):
         """Handle restart button press."""
         self.log.error("RESTARTING")
         self.restart_playback(None)
@@ -151,10 +152,17 @@ class NewsSkill(CommonPlaySkill):
         self.handle_play_request(station)
 
     @intent_handler(AdaptIntent('').require('Restart'))
-    def restart_playback(self, message):
+    def restart_playback(self, _):
         self.log.info(f'Restarting last station to be played: {self.last_station_played.acronym}')
         if self.last_station_played:
             self.handle_play_request(self.last_station_played)
+
+    @intent_handler(AdaptIntent('').require('Show').require("News"))
+    def handle_show_news(self, _):
+        if self.now_playing is not None:
+            self._show_gui_page("AudioPlayer")
+        else:
+            self.speak_dialog("no.news.playing")
 
     def CPS_start(self, _, data):
         """Handle request from Common Play System to start playback."""
@@ -166,7 +174,7 @@ class NewsSkill(CommonPlaySkill):
             selected_station = self.get_default_station()
         self.handle_play_request(selected_station)
         
-    def CPS_match_query_phrase(self, phrase: str) -> tuple((str, float, dict)):
+    def CPS_match_query_phrase(self, phrase: str) -> Tuple[str, float, dict]:
         """Respond to Common Play Service query requests.
         
         Args:
@@ -194,7 +202,7 @@ class NewsSkill(CommonPlaySkill):
         else:
             return None
             
-        return (match.station.full_name, match_level, match.station.as_dict())
+        return match.station.full_name, match_level, match.station.as_dict()
 
     def download_media_file(self, url: str) -> str:
         """Download a media file and return path to the stream.
