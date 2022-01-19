@@ -272,7 +272,6 @@ class NewsSkill(CommonPlaySkill):
         Args:
             station: Instance of a Station to be played
         """
-        self.stop()
         # Speak intro while downloading in background
         self.speak_dialog('news', data={"from": station.full_name})
         self._play_station(station)
@@ -295,8 +294,6 @@ class NewsSkill(CommonPlaySkill):
         """
         try:
             self.log.info(f'Playing News feed: {station.full_name}')
-            # Stop anything that might be playing already
-            self.bus.emit(Message('mycroft.audio.service.stop'))
             media_url = station.media_uri
             self.log.info(f'News media url: {media_url}')
             mime = find_mime_type(media_url)
