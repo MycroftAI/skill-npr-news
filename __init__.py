@@ -120,7 +120,6 @@ class NewsSkill(CommonPlaySkill):
 
     def handle_gui_restart(self, _):
         """Handle restart button press."""
-        self.log.error("RESTARTING")
         self.restart_playback(None)
 
     def on_websettings_changed(self):
@@ -367,6 +366,7 @@ class NewsSkill(CommonPlaySkill):
         self.stop_curl_process()
         self.CPS_send_status()
         self.gui.clear()
+        self.CPS_release_output_focus()
         return True
 
 
