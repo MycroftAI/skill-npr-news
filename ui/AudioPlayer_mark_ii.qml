@@ -167,6 +167,7 @@ Mycroft.CardDelegate {
 
                     Controls.Button {
                         id: restartButton
+                        visible: false
                         anchors.right: playButton.left
                         anchors.rightMargin: Mycroft.Units.gridUnit * 4
                         anchors.top: mediaControls.top
