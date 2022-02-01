@@ -196,6 +196,7 @@ Mycroft.CardDelegate {
 
                     Controls.Button {
                         id: playButton
+                        visible: false
                         anchors.right: mediaControls.right
                         anchors.rightMargin: Mycroft.Units.gridUnit * 4
                         anchors.top: mediaControls.top
