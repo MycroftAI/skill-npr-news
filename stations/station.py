@@ -144,7 +144,7 @@ def create_custom_station(station_url):
 
     NOTE: it cannot be a FetcherStation because you can't define the fetching function.
     """
-    is_rss_feed = feedparser.parse(station_url).entries > 0
+    is_rss_feed = len(feedparser.parse(station_url).entries) > 0
     if is_rss_feed:
         clazz = RSSStation
     else:
