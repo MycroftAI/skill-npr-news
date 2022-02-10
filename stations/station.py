@@ -175,6 +175,8 @@ stations = dict(
     GPB=FetcherStation('GPB', 'Georgia Public Radio', get_gpb_url, None),
     NPR=RSSStation('NPR', 'NPR News Now',
                    'https://www.npr.org/rss/podcast.php?id=500005', 'NPR.png'),
+    NPRLive=FileStation('NPRLive', 'NPR Live',
+                        'https://npr-ice.streamguys1.com/live.mp3', 'NPR.png'),
     OE3=FileStation('OE3', 'Ö3 Nachrichten',
                     'https://oe3meta.orf.at/oe3mdata/StaticAudio/Nachrichten.mp3', None),
     PBS=RSSStation('PBS', 'PBS NewsHour',
