@@ -7,4 +7,6 @@ settings.json
 .*.sw?
 
 # Dev stuff
-backup/
+backup/.wh.*
+
+.wh.*
