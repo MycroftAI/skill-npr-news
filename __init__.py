@@ -298,12 +298,16 @@ class NewsSkill(CommonPlaySkill):
             mime = find_mime_type(media_url)
             # Ensure announcement of station has finished before playing
             wait_while_speaking()
+
+            # We support streaming
+            self.CPS_play((media_url, mime))
+
             # If backend cannot handle https, download the file and provide a local stream.
-            if media_url[:8] == 'https://' and not self.is_https_supported:
-                stream = self.download_media_file(media_url)
-                self.CPS_play((f"file://{stream}", mime))
-            else:
-                self.CPS_play((media_url, mime))
+            # if media_url[:8] == 'https://' and not self.is_https_supported:
+            #     stream = self.download_media_file(media_url)
+            #     self.CPS_play((f"file://{stream}", mime))
+            # else:
+            #     self.CPS_play((media_url, mime))
             self.gui['media'] = {
                 "image": str(station.image_path),
                 "artist": station.acronym,
@@ -365,7 +369,7 @@ class NewsSkill(CommonPlaySkill):
         # Stop download process if it's running.
         self.stop_curl_process()
         self.CPS_send_status()
-        self.gui.clear()
+        self.gui.release()
         self.CPS_release_output_focus()
         return True
 
