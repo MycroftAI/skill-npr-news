@@ -117,7 +117,6 @@ Mycroft.CardDelegate {
                 id: mediaControlsContainer
                 anchors.top: parent.top
                 anchors.right: parent.right
-                anchors.bottom: bottomArea.top
                 anchors.left: imageContainer.right
                 // anchors.topMargin: provided by root container
                 // anchors.rightMargin: provided by root container
