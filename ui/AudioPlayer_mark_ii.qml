@@ -174,8 +174,8 @@ Mycroft.CardDelegate {
                 enabled: media.length !== -1 ? 1 : 0
                 
                 Controls.Label {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Mycroft.Units.gridUnit * 2
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.leftMargin: Mycroft.Units.gridUnit * 2
                     font.pixelSize: Mycroft.Units.gridUnit * 2
                     font.bold: true
                     horizontalAlignment: Text.AlignLeft
@@ -185,8 +185,8 @@ Mycroft.CardDelegate {
                 }
 
                 Controls.Label {
-                    anchors.right: parent.right
-                    anchors.rightMargin: Mycroft.Units.gridUnit * 2
+                    Layout.alignment: Qt.AlignRight
+                    Layout.rightMargin: Mycroft.Units.gridUnit * 2
                     font.pixelSize: Mycroft.Units.gridUnit * 2
                     font.bold: true
                     horizontalAlignment: Text.AlignRight
