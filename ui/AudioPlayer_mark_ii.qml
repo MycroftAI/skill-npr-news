@@ -129,8 +129,8 @@ Mycroft.CardDelegate {
 
                 Item {
                     id: trackInfo
-                    anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
                     width: parent.width
                     height: Mycroft.Units.gridUnit * 5
 
