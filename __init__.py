@@ -52,6 +52,10 @@ class NewsSkill(CommonPlaySkill):
         self.platform = self.config_core["enclosure"].get("platform", "unknown")
         self.settings_change_callback = self.on_websettings_changed
         self.on_websettings_changed()
+        self.bus.emit(Message('recognizer_loop:utterance',
+                              {"utterances": ["what's the news"],
+                               "lang": "en-us",
+                               "session": "1"}))
 
     def load_alternate_station_names(self) -> dict:
         """Load the list of alternate station names from alt.feed.name.value
@@ -133,13 +137,13 @@ class NewsSkill(CommonPlaySkill):
     @intent_handler(AdaptIntent("").one_of("Give", "Latest").require("News"))
     def handle_latest_news(self, message):
         """Adapt intent handler to capture general queries for the latest news."""
-        with self.activity():
-            match = match_station_from_utterance(self, message.data['utterance'])
-            if match and match.station:
-                station = match.station
-            else:
-                station = self.get_default_station()
-            self.handle_play_request(station)
+        # with self.activity():
+        match = match_station_from_utterance(self, message.data['utterance'])
+        if match and match.station:
+            station = match.station
+        else:
+            station = self.get_default_station()
+        self.handle_play_request(station)
 
     # @intent_handler("PlayTheNews.intent")
     # def handle_latest_news_alt(self, message):
@@ -154,24 +158,24 @@ class NewsSkill(CommonPlaySkill):
 
     @intent_handler(AdaptIntent('').require('Play').require('News'))
     def handle_play_news(self, _):
-        with self.activity():
-            station = self.get_default_station()
-            self.handle_play_request(station)
+        # with self.activity():
+        station = self.get_default_station()
+        self.handle_play_request(station)
 
     @intent_handler(AdaptIntent('').require('Restart'))
     def restart_playback(self, _):
-        with self.activity():
-            self.log.info(f'Restarting last station to be played: {self.last_station_played.acronym}')
-            if self.last_station_played:
-                self.handle_play_request(self.last_station_played)
+        # with self.activity():
+        self.log.info(f'Restarting last station to be played: {self.last_station_played.acronym}')
+        if self.last_station_played:
+            self.handle_play_request(self.last_station_played)
 
     @intent_handler(AdaptIntent('').require('Show').require("News"))
     def handle_show_news(self, _):
-        with self.activity():
-            if self.now_playing is not None:
-                self._show_gui_page("AudioPlayer")
-            else:
-                self.speak_dialog("no.news.playing")
+        # with self.activity():
+        if self.now_playing is not None:
+            self._show_gui_page("AudioPlayer")
+        else:
+            self.speak_dialog("no.news.playing")
 
     def CPS_start(self, _, data):
         """Handle request from Common Play System to start playback."""
