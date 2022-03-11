@@ -308,6 +308,7 @@ class NewsSkill(CommonPlaySkill):
             #     self.CPS_play((f"file://{stream}", mime))
             # else:
             #     self.CPS_play((media_url, mime))
+
             self.gui['media'] = {
                 "image": str(station.image_path),
                 "artist": station.acronym,
