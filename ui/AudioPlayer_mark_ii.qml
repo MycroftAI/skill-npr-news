@@ -139,7 +139,7 @@ Mycroft.CardDelegate {
                         font.pixelSize: 35
                         font.styleName: "Bold"
                         color: theme.fgColor
-                        heightUnits: 2
+                        heightUnits: 3
                         text: "News Briefing"
                         maxTextLength: 20
                     }
@@ -151,7 +151,7 @@ Mycroft.CardDelegate {
                         font.pixelSize: 47
                         font.styleName: "Bold"
                         color: theme.fgColor
-                        heightUnits: 3
+                        heightUnits: 4
                         text: media.artist
                         maxTextLength: 13
                     }
