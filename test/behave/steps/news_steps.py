@@ -67,13 +67,20 @@ def given_nothing_playing(context):
 
 @then('"mycroft-news" should stop playing')
 def then_playback_stop(context):
-    wait_for_service_message(context, 'stop')
-    context.audio_service = AudioService(context.bus)
-    for i in range(5):
-        if not context.audio_service.is_playing:
-            break
-        time.sleep(1)
-    assert not context.audio_service.is_playing
+    # Note - currently only checking for mycroft.stop being emitted.
+    # We do not check that the audioservice has actually stopped playing.
+    expected_msg_type = "mycroft.stop"
+    def check_for_msg(message):
+        return (message.msg_type == expected_msg_type, '')
+
+    passed, debug = then_wait(expected_msg_type, check_for_msg, context)
+
+    if not passed:
+        debug += mycroft_responses(context)
+    if not debug:
+        debug = "Mycroft didn't stop playback"
+
+    assert passed, debug
     context.bus.clear_messages()
 
 
