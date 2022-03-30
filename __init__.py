@@ -141,16 +141,16 @@ class NewsSkill(CommonPlaySkill):
                 station = self.get_default_station()
             self.handle_play_request(station)
 
-    # @intent_handler("PlayTheNews.intent")
-    # def handle_latest_news_alt(self, message):
-    #     """Padatious intent handler to capture short distinct utterances."""
-    #     with self.activity():
-    #         match = match_station_from_utterance(self, message.data['utterance'])
-    #         if match and match.station:
-    #             station = match.station
-    #         else:
-    #             station = self.get_default_station()
-    #         self.handle_play_request(station)
+    @intent_handler("PlayTheNews.intent")
+    def handle_latest_news_alt(self, message):
+        """Padatious intent handler to capture short distinct utterances."""
+        with self.activity():
+            match = match_station_from_utterance(self, message.data['utterance'])
+            if match and match.station:
+                station = match.station
+            else:
+                station = self.get_default_station()
+            self.handle_play_request(station)
 
     @intent_handler(AdaptIntent('').require('Play').require('News'))
     def handle_play_news(self, message):
