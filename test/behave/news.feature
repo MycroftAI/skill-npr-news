@@ -82,9 +82,9 @@ Feature: mycroft-news
   Scenario Outline: play a specific news channel
     Given nothing is playing
     When the user says "<play a specific news channel>"
-    Then "mycroft-playback-control" should reply with dialog from "just.one.moment.dialog"
     Then mycroft reply should contain "<specified channel>"
-    Then "<specified channel>" should play
+    # Disabled until Mark II is better mocked.
+    # Then "<specified channel>" should play
 
    Examples: play specific news channel
      | play a specific news channel | specified channel |
