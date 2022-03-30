@@ -153,10 +153,8 @@ class NewsSkill(CommonPlaySkill):
     #         self.handle_play_request(station)
 
     @intent_handler(AdaptIntent('').require('Play').require('News'))
-    def handle_play_news(self, _):
-        with self.activity():
-            station = self.get_default_station()
-            self.handle_play_request(station)
+    def handle_play_news(self, message):
+        self.handle_latest_news(message)
 
     @intent_handler(AdaptIntent('').require('Restart'))
     def restart_playback(self, _):
