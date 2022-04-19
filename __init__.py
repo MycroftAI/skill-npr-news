@@ -212,7 +212,8 @@ class NewsSkill(CommonPlaySkill):
     def is_https_supported(self) -> bool:
         """Check if any available audioservice backend supports https."""
         for service in self.audioservice.available_backends().values():
-            if 'https' in service['supported_uris']:
+            if ('https' in service['supported_uris'] and
+                    service['remote'] is False):
                 return True
         return False
 
