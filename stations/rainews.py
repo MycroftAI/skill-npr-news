@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import requests
-from pprint import pprint
 
 def get_rainews_url():
     domain = "https://www.raiplaysound.it"
@@ -26,9 +25,7 @@ def get_rainews_url():
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
     }
-    pprint(json_path)
     resp = requests.get(json_path, headers=headers).json()
-    pprint(resp['block']['cards'][0]['downloadable_audio']['url'])
     mp3_url = resp['block']['cards'][0]['downloadable_audio']['url']
 
     return mp3_url
