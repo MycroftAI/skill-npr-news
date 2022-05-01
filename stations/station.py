@@ -24,6 +24,7 @@ from mycroft.util import LOG
 from .abc import get_abc_url
 from .ft import get_ft_url
 from .gpb import get_gpb_url
+from .rainews import get_rainews_url
 from .tsf import get_tsf_url
 
 
@@ -181,6 +182,7 @@ stations = dict(
                    'https://www.pbs.org/newshour/feeds/rss/podcasts/show', 'PBS.png'),
     RDP=RSSStation('RDP', 'RDP Africa',
                    'http://www.rtp.pt//play/itunes/5442', None),
+    RG1=FetcherStation('RG1', 'Radio Giornale 1', get_rainews_url, None),
     RNE=RSSStation('RNE', 'National Spanish Radio',
                    'http://api.rtve.es/api/programas/36019/audios.rs', None),
     TSF=FetcherStation('TSF', 'TSF Radio', get_tsf_url, None),
@@ -200,6 +202,7 @@ country_defaults = dict(
     DE='DLF',
     ES='RNE',
     FI='YLE',
+    IT='RG1',
     PT='TSF',
     SE='Ekot',
     UK='BBC',
