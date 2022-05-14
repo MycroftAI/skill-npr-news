@@ -26,6 +26,10 @@ def get_rainews_url():
         "Upgrade-Insecure-Requests": "1"
     }
     resp = requests.get(json_path, headers=headers).json()
-    mp3_url = resp['block']['cards'][0]['downloadable_audio']['url']
+    path = resp['block']['cards'][0]['path_id']
+    grjson_path = f"{domain}{path}"
 
+    resp = requests.get(grjson_path, headers=headers).json()
+    mp3_url = resp['downloadable_audio']['url']
+    
     return mp3_url
