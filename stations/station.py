@@ -192,6 +192,8 @@ stations = dict(
         'WDR', 'WDR', 'https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast', 'WDR.png'),
     YLE=RSSStation(
         'YLE', 'YLE', 'https://feeds.yle.fi/areena/v1/series/1-1440981.rss', 'Yle.png'),
+     NOS=FileStation('NOS', 'NOS Nieuws',
+                    'https://cdn.nos.nl/content/radio/ditisdenieuweurlvoorhetradiobulletinvoorgooglevanafjuli2019.mp3', None),
 )
 
 country_defaults = dict(
@@ -207,4 +209,5 @@ country_defaults = dict(
     SE='Ekot',
     UK='BBC',
     US='NPR',
+    NL='NOS',
 )
