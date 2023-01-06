@@ -187,7 +187,7 @@ stations = dict(
                    'http://api.rtve.es/api/programas/36019/audios.rs', None),
     TSF=FetcherStation('TSF', 'TSF Radio', get_tsf_url, None),
     VRT=FileStation('VRT', 'VRT Nieuws',
-                    'https://progressive-audio.lwc.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3', None),
+                    'http://progressive-audio.vrtcdn.be/content/fixed/11_11niws-snip_hi.mp3', None),
     WDR=RSSStation(
         'WDR', 'WDR', 'https://www1.wdr.de/mediathek/audio/wdr-aktuell-news/wdr-aktuell-152.podcast', 'WDR.png'),
     YLE=RSSStation(
